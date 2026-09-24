@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Rumah",
+    "label": "Rumah Tinggal",
+    "icon": "house",
+    "showHome": true,
+    "sortOrder": 0
+  },
+  {
+    "name": "Ruko",
+    "label": "Ruko & Ruang Usaha",
+    "icon": "building",
+    "showHome": true,
+    "sortOrder": 1
+  },
+  {
+    "name": "Tanah",
+    "label": "Tanah",
+    "icon": "trees",
+    "showHome": true,
+    "sortOrder": 2
+  },
+  {
+    "name": "Kendaraan",
+    "label": "Kendaraan",
+    "icon": "car",
+    "showHome": true,
+    "sortOrder": 3
+  },
+  {
+    "name": "Gudang",
+    "label": "Gudang & Pabrik",
+    "icon": "warehouse",
+    "showHome": true,
+    "sortOrder": 4
+  }
+]

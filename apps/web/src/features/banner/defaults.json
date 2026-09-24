@@ -1,0 +1,41 @@
+[
+  {
+    "eyebrow": "PELUANG BARU, MASA DEPAN BARU",
+    "title": "Aset pilihan.",
+    "accent": "Peluang istimewa.",
+    "description": "Temukan properti dan aset pilihan untuk rencana Anda di seluruh Jawa Tengah.",
+    "action": "Jelajahi Aset",
+    "href": "/katalog-aset",
+    "note": "Hunian untuk cerita baru",
+    "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2200&q=85",
+    "trustFirst": "Informasi transparan",
+    "trustSecond": "Pilihan aset Jawa Tengah",
+    "caption": "Foto ilustrasi properti"
+  },
+  {
+    "eyebrow": "RUANG UNTUK TUMBUH",
+    "title": "Mulai usaha.",
+    "accent": "Buka peluang baru.",
+    "description": "Jelajahi ruko dan ruang usaha yang sesuai dengan kebutuhan pengembangan bisnis Anda.",
+    "action": "Lihat Ruko & Ruang Usaha",
+    "href": "/katalog-aset?category=Ruko",
+    "note": "Tempat bagi ide besar Anda",
+    "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2200&q=85",
+    "trustFirst": "Informasi transparan",
+    "trustSecond": "Pilihan aset Jawa Tengah",
+    "caption": "Foto ilustrasi properti"
+  },
+  {
+    "eyebrow": "RENCANAKAN LANGKAH ANDA",
+    "title": "Catat jadwalnya.",
+    "accent": "Temukan pilihannya.",
+    "description": "Lihat jadwal lelang, pelajari informasi aset, dan persiapkan kebutuhan Anda sebelum mengikuti lelang.",
+    "action": "Lihat Jadwal Lelang",
+    "href": "/jadwal-lelang",
+    "note": "Pilihan aset, informasi dalam satu tempat",
+    "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2200&q=85",
+    "trustFirst": "Informasi transparan",
+    "trustSecond": "Pilihan aset Jawa Tengah",
+    "caption": "Foto ilustrasi properti"
+  }
+]

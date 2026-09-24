@@ -1,0 +1,186 @@
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+dotenv.config();
+const name = process.env.DB_NAME || "lelang_bkkjateng";
+if (!/^[a-zA-Z0-9_]+$/.test(name)) throw new Error("Nama database tidak valid");
+const db = await mysql.createConnection({
+  host: process.env.DB_HOST || "127.0.0.1",
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+});
+await db.query(
+  `CREATE DATABASE IF NOT EXISTS \`${name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+);
+await db.changeUser({ database: name });
+await db.query(
+  `CREATE TABLE IF NOT EXISTS assets (id INT PRIMARY KEY AUTO_INCREMENT, slug VARCHAR(150) UNIQUE NOT NULL, code VARCHAR(30) UNIQUE NOT NULL, title VARCHAR(200) NOT NULL, category VARCHAR(30) NOT NULL, city VARCHAR(60) NOT NULL, address VARCHAR(250) NOT NULL, price DECIMAL(16,0) NOT NULL, oldPrice DECIMAL(16,0), land INT NOT NULL, building INT NOT NULL, bedrooms INT NOT NULL DEFAULT 0, image VARCHAR(500) NOT NULL, auctionDate DATETIME NOT NULL, certificate VARCHAR(30) NOT NULL, description TEXT NOT NULL, featured BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`,
+);
+await db.query(
+  `CREATE TABLE IF NOT EXISTS interests (id INT PRIMARY KEY AUTO_INCREMENT, asset_id INT NOT NULL, name VARCHAR(80) NOT NULL, email VARCHAR(150) NOT NULL, phone VARCHAR(20) NOT NULL, message TEXT NOT NULL, consent BOOLEAN NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (asset_id) REFERENCES assets(id))`,
+);
+const photos = [
+  "photo-1600596542815-ffad4c1539a9",
+  "photo-1600607687920-4e2a09cf159d",
+  "photo-1518005020951-eccb494ad742",
+  "photo-1500382017468-9049fed747ef",
+  "photo-1600585154340-be6161a56a0c",
+  "photo-1497366754035-f200968a6e72",
+  "photo-1486406146926-c627a92ad1ab",
+  "photo-1494976388531-d1058494cdd8",
+];
+const rows = [
+  [
+    "rumah-banyumanik",
+    "Rumah Modern di Banyumanik",
+    "Rumah",
+    "Semarang",
+    "Banyumanik, Kota Semarang, Jawa Tengah",
+    685000000,
+    850000000,
+    180,
+    120,
+    3,
+    "2026-10-15 10:00:00",
+    "SHM",
+  ],
+  [
+    "rumah-colomadu",
+    "Hunian Asri di Colomadu",
+    "Rumah",
+    "Karanganyar",
+    "Colomadu, Kabupaten Karanganyar, Jawa Tengah",
+    425000000,
+    510000000,
+    150,
+    95,
+    3,
+    "2026-10-16 09:00:00",
+    "SHM",
+  ],
+  [
+    "ruko-purwokerto",
+    "Ruko Strategis Pusat Kota",
+    "Ruko",
+    "Banyumas",
+    "Purwokerto Timur, Kabupaten Banyumas, Jawa Tengah",
+    950000000,
+    null,
+    120,
+    240,
+    0,
+    "2026-10-19 10:00:00",
+    "SHGB",
+  ],
+  [
+    "tanah-ungaran",
+    "Tanah Kavling dengan View Pegunungan",
+    "Tanah",
+    "Semarang",
+    "Ungaran Barat, Kabupaten Semarang, Jawa Tengah",
+    285000000,
+    340000000,
+    320,
+    0,
+    0,
+    "2026-10-21 10:00:00",
+    "SHM",
+  ],
+  [
+    "rumah-solo",
+    "Rumah Keluarga di Banjarsari",
+    "Rumah",
+    "Surakarta",
+    "Banjarsari, Kota Surakarta, Jawa Tengah",
+    575000000,
+    null,
+    165,
+    110,
+    3,
+    "2026-10-22 09:00:00",
+    "SHM",
+  ],
+  [
+    "ruko-pekalongan",
+    "Ruang Usaha di Pekalongan",
+    "Ruko",
+    "Pekalongan",
+    "Pekalongan Barat, Kota Pekalongan, Jawa Tengah",
+    730000000,
+    800000000,
+    100,
+    180,
+    0,
+    "2026-10-23 10:00:00",
+    "SHGB",
+  ],
+  [
+    "gudang-kendal",
+    "Gudang Kawasan Industri Kendal",
+    "Gudang",
+    "Kendal",
+    "Kaliwungu, Kabupaten Kendal, Jawa Tengah",
+    1850000000,
+    null,
+    900,
+    650,
+    0,
+    "2026-10-26 10:00:00",
+    "SHGB",
+  ],
+  [
+    "kendaraan-semarang",
+    "Kendaraan Operasional Semarang",
+    "Kendaraan",
+    "Semarang",
+    "Semarang Tengah, Kota Semarang, Jawa Tengah",
+    185000000,
+    210000000,
+    0,
+    0,
+    0,
+    "2026-10-28 09:00:00",
+    "BPKB",
+  ],
+];
+for (const [i, row] of rows.entries()) {
+  const [
+    slug,
+    title,
+    category,
+    city,
+    address,
+    price,
+    oldPrice,
+    land,
+    building,
+    bedrooms,
+    auctionDate,
+    certificate,
+  ] = row;
+  await db.execute(
+    "INSERT IGNORE INTO assets (slug,code,title,category,city,address,price,oldPrice,land,building,bedrooms,image,auctionDate,certificate,description,featured) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    [
+      slug,
+      `BKK-${String(i + 1).padStart(4, "0")}`,
+      title,
+      category,
+      city,
+      address,
+      price,
+      oldPrice,
+      land,
+      building,
+      bedrooms,
+      `https://images.unsplash.com/${photos[i]}?auto=format&fit=crop&w=1000&q=85`,
+      auctionDate,
+      certificate,
+      "Data aset ini merupakan contoh untuk demonstrasi aplikasi. Foto adalah ilustrasi dan bukan dokumentasi aset sebenarnya. Informasi lokasi, dokumen, nilai limit, uang jaminan, serta jadwal harus diverifikasi dan dilengkapi petugas sebelum publikasi lelang resmi.",
+      i < 3,
+    ],
+  );
+}
+await db.end();
+console.log(
+  "Database siap. 8 aset demo tersedia; data yang sudah ada tidak ditimpa.",
+);

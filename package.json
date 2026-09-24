@@ -1,0 +1,26 @@
+{
+  "name": "lelang-bkk-jateng",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n WEB,API -c cyan,yellow \"npm run dev -w apps/web\" \"npm run dev -w apps/api\"",
+    "build": "npm run build -w apps/api && npm run build -w apps/web",
+    "db:setup": "node scripts/setup-db.mjs && node scripts/setup-admin.mjs && node scripts/seed-sales-demo.mjs && node scripts/setup-gallery.mjs && node scripts/setup-guide.mjs && node scripts/setup-visitors.mjs && node scripts/setup-banners.mjs && node scripts/setup-categories.mjs && node scripts/setup-provinces.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "admin:setup": "node scripts/setup-admin.mjs",
+    "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"scripts/*.mjs\" \"tests/*.mjs\"",
+    "db:seed-sales": "node scripts/seed-sales-demo.mjs",
+    "db:gallery": "node scripts/setup-gallery.mjs",
+    "db:guide": "node scripts/setup-guide.mjs",
+    "db:visitors": "node scripts/setup-visitors.mjs",
+    "db:banners": "node scripts/setup-banners.mjs",
+    "db:categories": "node scripts/setup-categories.mjs",
+    "db:provinces": "node scripts/setup-provinces.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "prettier": "^3.9.8"
+  }
+}

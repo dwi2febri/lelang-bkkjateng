@@ -1,0 +1,22 @@
+export type CatalogAsset = {
+  id: number;
+  slug: string;
+  code: string;
+  title: string;
+  category: string;
+  city: string;
+  address: string;
+  price: number;
+  oldPrice: number | null;
+  land: number;
+  building: number;
+  bedrooms: number;
+  image: string;
+  photos?: string[];
+  viewCount?: number;
+  interestCount?: number;
+  auctionDate: string;
+  certificate: string;
+  description: string;
+  saleMethod?: "Lelang" | "Jual Beli" | "Cessie";
+};

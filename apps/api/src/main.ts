@@ -1,4 +1,5 @@
 import { CategoriesController } from "./categories.controller";
+import { AssetUploadsController, PublicAssetUploadsController } from "./asset-uploads.controller";
 import { BannersController } from "./banners.controller";
 import { VisitorsController } from "./visitors.controller";
 import { GuideController } from "./guide.controller";
@@ -13,18 +14,25 @@ import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
 import { AdminGuard } from "./auth/auth.guard";
 import { AdminController } from "./admin/admin.controller";
+import { PublicAccountController } from "./public-account/public-account.controller";
+import { PublicAccountService } from "./public-account/public-account.service";
+import { InterestChatController } from "./interest-chat.controller";
 config({ path: resolve(__dirname, "../../../.env"), quiet: true });
 @Module({
   controllers: [
     AssetsController,
     AuthController,
     AdminController,
+    PublicAccountController,
+    InterestChatController,
     GuideController,
     VisitorsController,
     BannersController,
     CategoriesController,
+    AssetUploadsController,
+    PublicAssetUploadsController,
   ],
-  providers: [Database, AuthService, AdminGuard],
+  providers: [Database, AuthService, AdminGuard, PublicAccountService],
 })
 class AppModule {}
 async function bootstrap() {
@@ -42,7 +50,7 @@ async function bootstrap() {
       res: { setHeader: (key: string, value: string) => void },
       next: () => void,
     ) => {
-      if (req.url.startsWith("/api/admin") || req.url.startsWith("/api/auth"))
+      if (req.url.startsWith("/api/admin") || req.url.startsWith("/api/auth") || req.url.startsWith("/api/public-account"))
         res.setHeader("Cache-Control", "no-store");
       next();
     },

@@ -15,6 +15,7 @@ test('metode, tag, rentang harga, dan tanggal WIB dapat difilter bersamaan',asyn
   }
   const find=async(params)=>{const response=await fetch(api+'?'+new URLSearchParams({q:prefix,...params}));assert.equal(response.status,200);return (await response.json()).data;};
   for(const [i,method] of ['Jual Beli','Lelang','Cessie'].entries())assert.deepEqual((await find({saleMethod:method})).map(a=>a.id),[ids[i]]);
+  assert.deepEqual((await find({period:'all'})).map(a=>a.id),[ids[1]],'Jadwal hanya menampilkan aset lelang');
   assert.deepEqual((await find({saleMethod:'Lelang',tag:'discount',minPrice:'200000000',maxPrice:'200000000',dateFrom:'2032-05-10',dateTo:'2032-05-10'})).map(a=>a.id),[ids[1]]);
   assert.equal((await find({dateFrom:'2032-05-10',dateTo:'2032-05-10'})).length,2);
   assert.equal((await find({tag:'featured'})).length,2);

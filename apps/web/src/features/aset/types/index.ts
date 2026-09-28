@@ -7,6 +7,8 @@ export type Asset = {
   saleMethod: string;
   province: string | null;
   city: string;
+  district?: string | null;
+  village?: string | null;
   address: string;
   price: number;
   oldPrice: number | null;
@@ -14,7 +16,24 @@ export type Asset = {
   building: number;
   bedrooms: number;
   image: string;
-  auctionDate: string;
+  photos: string[];
+  details?: {
+    googleMapsUrl?: string;
+    latitude?: number;
+    locationIsDemo?: boolean;
+    longitude?: number;
+    attributes?: Record<string, string | number>;
+    bathrooms?: number;
+    floors?: number;
+    electricity?: number;
+    carport?: number;
+    yearBuilt?: number;
+    auctionDeposit?: number;
+    auctionOrganizer?: string;
+    auctionUrl?: string;
+    facilities?: string[];
+  };
+  auctionDate: string | null;
   certificate: string;
   description: string;
   featured: number;

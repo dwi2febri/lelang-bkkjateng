@@ -1,10 +1,14 @@
 export type CatalogAsset = {
+  categorySettings?: import("@/features/categories/settings").CategorySettings;
   id: number;
   slug: string;
   code: string;
   title: string;
   category: string;
+  province?: string;
   city: string;
+  district?: string | null;
+  village?: string | null;
   address: string;
   price: number;
   oldPrice: number | null;
@@ -13,9 +17,10 @@ export type CatalogAsset = {
   bedrooms: number;
   image: string;
   photos?: string[];
+  details?: import("@/features/aset/types").Asset["details"];
   viewCount?: number;
   interestCount?: number;
-  auctionDate: string;
+  auctionDate: string | null;
   certificate: string;
   description: string;
   saleMethod?: "Lelang" | "Jual Beli" | "Cessie";

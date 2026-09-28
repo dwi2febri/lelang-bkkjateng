@@ -1,4 +1,5 @@
 "use client";
+import {getCategorySettings,specValue,formatSpec} from "@/features/categories/settings";
 import { useCategories, CategoryIcon } from "@/features/categories/categories";
 import { AssetDetail } from "./asset-detail";
 import { HeroSlider } from "./hero-slider";
@@ -39,9 +40,16 @@ import {
   Menu,
   Ruler,
   BedDouble,
+  LogOut,
+  Handshake,
+  Gavel,
+  FileText,
 } from "lucide-react";
 import type { CatalogAsset as Asset } from "../types";
 import { getCatalog, sendInterest } from "../services/catalog-service";
+import { saveSubmissionReceipt } from "../submission-history";
+import { accountRequest, saveLatestApplicant } from "../public-account";
+import { usePublicFavorites } from "../public-favorites-provider";
 const money = (n: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
@@ -55,18 +63,25 @@ const date = (s: string) =>
     year: "numeric",
     timeZone: "Asia/Jakarta",
   });
+const saleMethodCards = [
+  { name: "Jual Beli", description: "Pilihan aset dengan penawaran jual beli langsung.", icon: Handshake, tone: "buy" },
+  { name: "Lelang", description: "Temukan aset yang ditawarkan melalui proses lelang.", icon: Gavel, tone: "auction" },
+  { name: "Cessie", description: "Jelajahi peluang aset melalui skema cessie.", icon: FileText, tone: "cessie" },
+] as const;
 export default function CatalogPage({
   view = "home",
   initialFilters = {},
   detailAsset,
   children,
   guidePage = false,
+  historyPage = false,
 }: {
   view?: PublicView;
   initialFilters?: CatalogFilters;
   detailAsset?: Asset;
   children?: React.ReactNode;
   guidePage?: boolean;
+  historyPage?: boolean;
 }) {
   const masterCategories = useCategories();
   const categories = [{name:"Semua",label:"Semua Aset",icon:"building",showHome:true},...masterCategories.filter(c=>c.showHome)];
@@ -85,6 +100,7 @@ export default function CatalogPage({
   const [assets, setAssets] = useState<Asset[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const { favorites, favoritesReady, publicUser, accountChecked, toggleFavorite } = usePublicFavorites();
   const [category, setCategory] = useState(
       initialFilters.category?.slice(0,30) || "Semua",
     ),
@@ -101,19 +117,12 @@ export default function CatalogPage({
     [query, setQuery] = useState(initialFilters.q?.slice(0, 100) || ""),
     [term, setTerm] = useState(initialFilters.q?.slice(0, 100) || ""),
     [sort, setSort] = useState("recommended");
-  const [favorites, setFavorites] = useState<number[]>([]),
-    [info, setInfo] = useState(""),
+  const [info, setInfo] = useState(""),
     [menu, setMenu] = useState(false),
     [submitted, setSubmitted] = useState(false),
+    [historyUnavailable, setHistoryUnavailable] = useState(false),
     [sending, setSending] = useState(false),
     [formError, setFormError] = useState("");
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("bkk-favorites") || "[]");
-      if (Array.isArray(saved))
-        setFavorites(saved.filter((v: unknown) => typeof v === "number"));
-    } catch {}
-  }, []);
   const load = useCallback(
     async (signal?: AbortSignal) => {
       requesting.current = true;
@@ -191,13 +200,14 @@ export default function CatalogPage({
     if (
       detailAsset ||
       guidePage ||
+      historyPage ||
       (view === "schedule" && scheduleView === "calendar")
     )
       return;
     const controller = new AbortController();
     load(controller.signal);
     return () => controller.abort();
-  }, [load, retry, detailAsset, guidePage, view, scheduleView]);
+  }, [load, retry, detailAsset, guidePage, historyPage, view, scheduleView]);
   const loadMore = useCallback(() => {
     if (requesting.current || loading || error || !hasMore) return;
     requesting.current = true;
@@ -257,15 +267,19 @@ export default function CatalogPage({
     };
   }, [info]);
   function favorite(id: number) {
-    setFavorites((old) => {
-      const next = old.includes(id)
-        ? old.filter((x) => x !== id)
-        : [...old, id];
+    void toggleFavorite(id).catch(() => setInfo("Favorit belum tersimpan di akun. Coba kembali."));
+  }
+  async function logoutPublic() {
+    try {
+      await accountRequest("logout", {});
       try {
-        localStorage.setItem("bkk-favorites", JSON.stringify(next));
+        localStorage.removeItem("bkk-favorites");
+        localStorage.removeItem("bkk-favorites-owner");
       } catch {}
-      return next;
-    });
+      window.location.assign("/riwayat-pengajuan");
+    } catch {
+      setInfo("Gagal keluar dari akun. Silakan coba kembali.");
+    }
   }
   function navigate(next: string) {
     setMenu(false);
@@ -299,6 +313,8 @@ export default function CatalogPage({
         message: data.get("message") || "",
         consent: data.get("consent") === "on",
       });
+      setHistoryUnavailable(!saveSubmissionReceipt(selected));
+      saveLatestApplicant({ name: String(data.get("name") || ""), email: String(data.get("email") || ""), phone: String(data.get("phone") || "") });
       setSubmitted(true);
     } catch {
       setFormError(
@@ -324,9 +340,9 @@ export default function CatalogPage({
               <Link
                 key={v}
                 href={publicRoutes[v as PublicView]}
-                aria-current={!guidePage && view === v ? "page" : undefined}
+                aria-current={!guidePage && !historyPage && view === v ? "page" : undefined}
                 onClick={() => setMenu(false)}
-                className={!guidePage && view === v ? "active" : ""}
+                className={!guidePage && !historyPage && view === v ? "active" : ""}
               >
                 {l}
               </Link>
@@ -339,13 +355,16 @@ export default function CatalogPage({
             >
               Panduan Lelang
             </Link>
+            <Link href="/riwayat-pengajuan" className={historyPage ? "active" : ""} aria-current={historyPage ? "page" : undefined} onClick={() => setMenu(false)}>History Pengajuan</Link>
           </nav>
+          {accountChecked && !publicUser && <Link href="/masuk" className="public-login-link"><span>Sudah punya akun?</span> <strong>Masuk</strong></Link>}
+          {accountChecked && publicUser && <button type="button" className="public-logout-button" onClick={logoutPublic}><LogOut size={16}/> Keluar</button>}
           <button
             className="favorite-nav"
             onClick={() => navigate("favorites")}
           >
             <Heart size={18} /> <span>Favorit</span>
-            <b>{favorites.length}</b>
+            <b aria-live="polite">{favoritesReady ? favorites.length : "…"}</b>
           </button>
           <button
             className="mobile-menu"
@@ -374,6 +393,7 @@ export default function CatalogPage({
                       Referensi aset: {selected.code}. Ini adalah demonstrasi;
                       belum ada notifikasi ke petugas.
                     </p>
+                    {historyUnavailable ? <p>Riwayat tidak dapat disimpan di browser ini.</p> : <Link href="/riwayat-pengajuan">Lihat History Pengajuan →</Link>}
                   </div>
                 </div>
               ) : (
@@ -382,6 +402,8 @@ export default function CatalogPage({
                     Nama lengkap
                     <input
                       name="name"
+                      key={`name-${publicUser?.id || 0}`}
+                      defaultValue={publicUser?.name || ""}
                       required
                       minLength={2}
                       maxLength={80}
@@ -392,6 +414,8 @@ export default function CatalogPage({
                     Email
                     <input
                       name="email"
+                      key={`email-${publicUser?.id || 0}`}
+                      defaultValue={publicUser?.email || ""}
                       type="email"
                       required
                       maxLength={150}
@@ -402,6 +426,8 @@ export default function CatalogPage({
                     Nomor WhatsApp
                     <input
                       name="phone"
+                      key={`phone-${publicUser?.id || 0}`}
+                      defaultValue={publicUser?.phone || ""}
                       type="tel"
                       pattern="(\+62|0)[0-9]{8,13}"
                       required
@@ -600,6 +626,23 @@ export default function CatalogPage({
                     />
                   )}
                   <div className="catalog-results">
+                    {view === "home" && (
+                      <section className="sale-method-shortcuts" aria-labelledby="sale-method-shortcuts-title">
+                        <div className="sale-method-shortcuts-heading">
+                          <span className="overline">JELAJAHI ASET</span>
+                          <h2 id="sale-method-shortcuts-title">Pilih metode penjualan</h2>
+                        </div>
+                        <div className="sale-method-shortcuts-grid">
+                          {saleMethodCards.map(({ name, description, icon: Icon, tone }) => (
+                            <Link key={name} className={`sale-method-shortcut sale-method-shortcut-${tone}`} href={catalogHref({ saleMethod: name })}>
+                              <span className="sale-method-shortcut-icon"><Icon size={24} strokeWidth={1.8} /></span>
+                              <span className="sale-method-shortcut-copy"><strong>{name}</strong><small>{description}</small></span>
+                              <span className="sale-method-shortcut-arrow"><ArrowUpRight size={18} /></span>
+                            </Link>
+                          ))}
+                        </div>
+                      </section>
+                    )}
                     <div className="section-heading">
                       <div>
                         <span className="overline">
@@ -657,7 +700,7 @@ export default function CatalogPage({
                             view === "schedule" && scheduleView === "calendar"
                           ) && (
                             <span aria-live="polite">
-                              {loading
+                              {loading || (view === "favorites" && !favoritesReady)
                                 ? "Memuat…"
                                 : (view === "favorites"
                                     ? visible.length
@@ -732,7 +775,7 @@ export default function CatalogPage({
                           Coba lagi
                         </button>
                       </div>
-                    ) : loading &&
+                    ) : (loading || (view === "favorites" && !favoritesReady)) &&
                       !(view === "catalog" && assets.length > 0) ? (
                       <div className="asset-grid">
                         {[1, 2, 3, 4].map((x) => (
@@ -831,28 +874,7 @@ export default function CatalogPage({
                                 {a.title}
                               </button>
                               <div className="specs">
-                                {a.land > 0 ? (
-                                  <>
-                                    <span>
-                                      <Ruler size={14} /> LT {a.land} m²
-                                    </span>
-                                    {a.building > 0 && (
-                                      <span>
-                                        <House size={14} /> LB {a.building} m²
-                                      </span>
-                                    )}
-                                  </>
-                                ) : (
-                                  <span>
-                                    <CarFront size={14} /> Kendaraan operasional
-                                  </span>
-                                )}
-                                {a.bedrooms > 0 && (
-                                  <span>
-                                    <BedDouble size={14} />
-                                    {a.bedrooms}
-                                  </span>
-                                )}
+                                {getCategorySettings(a.category,masterCategories.find(c=>c.name===a.category)?.settings).fields.filter(f=>f.enabled&&f.summary).map(field=><span key={field.key}>{field.label}: {formatSpec(specValue(a,field.key),field.unit)}</span>)}
                               </div>
                               <div className="price-line">
                                 <span>Harga limit</span>
@@ -872,8 +894,7 @@ export default function CatalogPage({
                               </div>
                               <div className="card-bottom">
                                 <span>
-                                  <CalendarDays size={14} />
-                                  {date(a.auctionDate)}
+                                  {a.saleMethod === "Lelang" && a.auctionDate ? <><CalendarDays size={14} />{date(a.auctionDate)}</> : a.saleMethod}
                                 </span>
                                 <button
                                   onClick={() => open(a)}
@@ -1074,7 +1095,7 @@ export default function CatalogPage({
                   aplikasi.
                 </p>
                 <p>
-                  Favorit disimpan secara lokal di browser. Tidak ada pembayaran
+                  Favorit dan riwayat pengajuan tanpa data kontak disimpan secara lokal di browser. Tidak ada pembayaran
                   ataupun pengiriman notifikasi pada prototipe ini.
                 </p>
                 <p>

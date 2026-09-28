@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Phone, Building2, Clock3 } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MessageCircle, Building2, Clock3 } from "lucide-react";
 import { pengajuanService } from "../services/pengajuan-service";
 import type { Interest } from "../types";
 import { errorMessage } from "@/services/api";
@@ -12,6 +12,14 @@ import {
 import { ApprovalForm } from "@/features/approval/components/approval-form";
 import { currency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { InterestChat } from "@/components/ui/interest-chat";
+function whatsappNumber(phone: string): string | null {
+  if (!/^[+\d\s()-]+$/.test(phone)) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (/^0\d{8,13}$/.test(digits)) return `62${digits.slice(1)}`;
+  if (/^62\d{8,13}$/.test(digits)) return digits;
+  return null;
+}
 export function PengajuanDetail({ id }: { id: string }) {
   const [interest, setInterest] = useState<Interest | null>(null),
     [error, setError] = useState("");
@@ -33,6 +41,7 @@ export function PengajuanDetail({ id }: { id: string }) {
       </div>
     );
   if (!interest) return <div className="admin-loading">Memuat pengajuan…</div>;
+  const waNumber = whatsappNumber(interest.phone);
   return (
     <>
       <Link className="admin-back" href="/pengajuan">
@@ -70,10 +79,15 @@ export function PengajuanDetail({ id }: { id: string }) {
                 <Mail size={16} />
                 {interest.email}
               </a>
-              <a href={`tel:${interest.phone}`}>
-                <Phone size={16} />
-                {interest.phone}
-              </a>
+              <div className="contact-phone">
+                <a href={`tel:${interest.phone}`}>
+                  <Phone size={16} />
+                  {interest.phone}
+                </a>
+                {waNumber && <a className="whatsapp-link" href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" aria-label={`Chat WhatsApp ${interest.phone}`} title="Chat via WhatsApp">
+                  <span className="whatsapp-icon" aria-hidden="true"><MessageCircle size={20} /><Phone size={10} /></span>
+                </a>}
+              </div>
             </div>
             <div className="admin-divider" />
             <span className="admin-eyebrow">PESAN PEMOHON</span>
@@ -126,6 +140,7 @@ export function PengajuanDetail({ id }: { id: string }) {
               <p className="admin-helper">Belum ada perubahan status.</p>
             )}
           </section>
+          {interest.public_user_id && (interest.status === "diproses" || interest.history?.some(item => item.status === "diproses")) && <section className="admin-panel padded"><InterestChat interestId={interest.id} role="admin" /></section>}
         </div>
         <section className="admin-panel padded sticky-panel searchable-form-panel">
           <h2>Tindak lanjut</h2>

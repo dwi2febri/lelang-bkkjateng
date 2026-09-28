@@ -76,7 +76,7 @@ export function Sidebar({
               </div>
             </div>;
           })}
-          <Link href="/master-kategori" onClick={onClose} className={pathname === "/master-kategori" ? "active" : ""} aria-current={pathname === "/master-kategori" ? "page" : undefined}><Tags size={19} />Master Kategori</Link>
+          <Link href="/master-kategori" onClick={onClose} className={pathname.startsWith("/master-kategori") ? "active" : ""} aria-current={pathname.startsWith("/master-kategori") ? "page" : undefined}><Tags size={19} />Master Kategori</Link>
           <Link href="/kelola-banner" onClick={onClose} className={pathname === "/kelola-banner" ? "active" : ""} aria-current={pathname === "/kelola-banner" ? "page" : undefined}><Images size={19} />Pengaturan Banner</Link>
           <Link href="/kelola-panduan" onClick={onClose} className={pathname === "/kelola-panduan" ? "active" : ""} aria-current={pathname === "/kelola-panduan" ? "page" : undefined}><BookOpen size={19} />Panduan Lelang</Link>
         </div>

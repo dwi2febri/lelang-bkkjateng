@@ -2,6 +2,7 @@ export type InterestStatus = "baru" | "diproses" | "selesai" | "ditolak";
 export type Interest = {
   id: number;
   asset_id: number;
+  public_user_id?: number | null;
   name: string;
   email: string;
   phone: string;

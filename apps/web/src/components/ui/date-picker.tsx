@@ -56,6 +56,7 @@ export function DatePicker({
   onChange,
   min = "1000-01-01",
   max = "9999-12-31",
+  emptyHint = "Tentukan tanggal untuk menyaring jadwal",
 }: {
   label: string;
   name: string;
@@ -63,6 +64,7 @@ export function DatePicker({
   onChange: (value: string) => void;
   min?: string;
   max?: string;
+  emptyHint?: string;
 }) {
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null),
@@ -226,7 +228,7 @@ export function DatePicker({
               <span>
                 {value
                   ? "Klik tanggal lain untuk mengubah pilihan"
-                  : "Tentukan tanggal untuk menyaring jadwal"}
+                  : emptyHint}
               </span>
             </div>
             <div className="date-picker-month">

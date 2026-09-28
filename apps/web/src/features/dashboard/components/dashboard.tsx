@@ -45,9 +45,8 @@ export function Dashboard() {
       setData(overview.data);
       setAssets(
         list
-          .filter(
-            (a) =>
-              !a.archived && new Date(a.auctionDate).getTime() >= Date.now(),
+          .filter((a): a is Asset & { auctionDate: string } =>
+            !a.archived && a.saleMethod === "Lelang" && !!a.auctionDate && new Date(a.auctionDate).getTime() >= Date.now(),
           )
           .sort((a, b) => a.auctionDate.localeCompare(b.auctionDate))
           .slice(0, 3),
@@ -235,7 +234,7 @@ export function Dashboard() {
                 <Link href={`/aset/${a.id}`} key={a.id}>
                   <img src={a.image} alt="Ilustrasi aset" />
                   <div>
-                    <small>{formatDate(a.auctionDate)}</small>
+                    <small>{a.auctionDate ? formatDate(a.auctionDate) : "Belum dijadwalkan"}</small>
                     <h3>{a.title}</h3>
                     <span>
                       {a.city} · {currency(a.price)}

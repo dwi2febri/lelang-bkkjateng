@@ -7,9 +7,11 @@ import type { CatalogAsset } from "../types";
 export function AssetGallery({
   asset,
   submitted,
+  preview = false,
 }: {
   asset: CatalogAsset;
   submitted: boolean;
+  preview?: boolean;
 }) {
   const photos = [...new Set([asset.image, ...(asset.photos || [])])];
   const [active, setActive] = useState(0);
@@ -17,6 +19,7 @@ export function AssetGallery({
   const [views, setViews] = useState(asset.viewCount || 0);
   const modal = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (preview) return;
     let cancelled = false;
     try {
       let visitorId = sessionStorage.getItem("bkk-visitor");
@@ -38,7 +41,7 @@ export function AssetGallery({
     return () => {
       cancelled = true;
     };
-  }, [asset.slug]);
+  }, [asset.slug, preview]);
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -118,7 +121,7 @@ export function AssetGallery({
           </div>
         )}
         <div className="gallery-meta">
-          <small>Foto ilustrasi · Data contoh</small>
+          <small>{asset.image.startsWith("/api/uploads/") ? "Foto aset" : "Foto ilustrasi · Data contoh"}</small>
           <div>
             <span className="asset-method">{asset.category}</span>
             <span title="Dilihat per sesi browser">

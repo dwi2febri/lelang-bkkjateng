@@ -444,12 +444,19 @@ Instalasi lama: jalankan `npm.cmd run db:guide`. Instalasi baru: sudah termasuk 
 | Halaman / layanan | Lokasi |
 | --- | --- |
 | Admin `/master-kategori` | `apps/web/src/app/master-kategori/page.tsx` |
+| Tambah kategori `/master-kategori/baru` | `apps/web/src/app/master-kategori/baru/page.tsx` |
+| Edit kategori `/master-kategori/[name]/edit` | `apps/web/src/app/master-kategori/[name]/edit/page.tsx` |
+| Form kategori pada halaman tersendiri | `apps/web/src/features/categories/category-form.tsx` |
+| Popup pencarian ikon dari API Iconify | `apps/web/src/components/ui/icon-picker.tsx` |
+| Ikon spesifikasi dan kelengkapan pada form/detail | `apps/web/src/components/ui/catalog-icon.tsx` |
 | Form tambah/edit, ikon, urutan, tampil di beranda | `apps/web/src/features/categories/category-editor.tsx` |
 | Data kategori dan ikon bersama | `apps/web/src/features/categories/categories.tsx` |
 | API kategori | `apps/api/src/categories.controller.ts` |
 | Tabel `asset_categories` | `scripts/setup-categories.mjs` |
 
 GET `/api/categories` dipakai beranda, filter katalog, dan formulir aset. POST `/api/admin/categories` menambah kategori; PUT `/api/admin/categories/:name` mengubah label, ikon, urutan, dan visibilitas beranda. Kode kategori tetap agar hubungan dengan aset tidak berubah. Migrasi: `npm run db:categories` (juga bagian dari `db:setup`).
+
+Pengaturan kategori juga mencakup template rumah, ruko, tanah, kendaraan, gudang/pabrik, dan umum; label deskripsi/dokumen/tombol; bagian detail aktif; kolom spesifikasi (teks, angka, dropdown), satuan, batas nilai, wajib isi, urutan, visibilitas detail/ringkasan; serta checklist kelengkapan. Editor berada di `apps/web/src/features/categories/category-settings-editor.tsx`; skema bersama dan template di `apps/api/src/category-settings.ts`. Form tambah/edit, preview, detail publik, dan ringkasan katalog mengikuti pengaturan ini. Nilai kolom tambahan disimpan di `assets.details.attributes`; nilai spesifikasi lama tetap dibaca. Migrasi tambahan `node scripts/setup-category-settings.mjs` menambahkan `asset_categories.settings` tanpa mengubah data aset lama. Menonaktifkan/menghapus kolom dari pengaturan menyembunyikan kolom, bukan menghapus nilai tersimpan; gunakan kode kolom yang sama untuk mengaktifkannya kembali.
 
 ### Filter Kelola Aset dan provinsi
 

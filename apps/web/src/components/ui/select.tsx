@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown, Search } from "lucide-react";
 
 type Option = { value: string; label: string };
@@ -12,6 +12,7 @@ export function Select({
   options,
   onChange,
   disabled = false,
+  icon,
 }: {
   label: string;
   name: string;
@@ -19,6 +20,7 @@ export function Select({
   options: Option[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  icon?: ReactNode;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -82,13 +84,14 @@ export function Select({
 
   return (
     <div className="filter-select" ref={root}>
-      <label id={`${id}-label`} htmlFor={id}>{label}</label>
+      <label id={`${id}-label`} htmlFor={id} className={icon ? "field-label-with-icon" : undefined}>{icon}{label}</label>
       <input type="hidden" name={name} value={value} />
       <button
         ref={trigger}
         id={id}
         type="button"
         disabled={disabled}
+        title={disabled ? options[selectedIndex]?.label : undefined}
         role="combobox"
         aria-labelledby={`${id}-label`}
         aria-haspopup="listbox"

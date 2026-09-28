@@ -5,17 +5,19 @@ export function Modal({
   title,
   children,
   onClose,
+  initialFocus,
 }: {
   title: string;
   children: React.ReactNode;
   onClose: () => void;
+  initialFocus?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
     const old = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    ref.current?.querySelector<HTMLElement>("button")?.focus();
+    ref.current?.querySelector<HTMLElement>(initialFocus || "button")?.focus();
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "Tab") {
@@ -40,7 +42,7 @@ export function Modal({
       window.removeEventListener("keydown", key);
       previous?.focus();
     };
-  }, [onClose]);
+  }, [onClose, initialFocus]);
   return (
     <div className="admin-modal-backdrop" onClick={onClose}>
       <div
@@ -53,7 +55,7 @@ export function Modal({
       >
         <div className="admin-modal-heading">
           <h2>{title}</h2>
-          <button aria-label="Tutup" onClick={onClose}>
+          <button type="button" aria-label="Tutup" onClick={onClose}>
             <X size={20} />
           </button>
         </div>

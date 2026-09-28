@@ -2,6 +2,7 @@
 import {useEffect,useState} from "react";
 import {House,Building2,Trees,CarFront,Warehouse,Store,Landmark,Factory,KeyRound,Truck,MapPin,Hotel,Building,BriefcaseBusiness,ShoppingBag,BedDouble,Fence,LandPlot,Mountain,Wheat,Flower2,TreePine,Waves,Palmtree,Bike,BusFront,Caravan,Tractor,Ship,Plane,TrainFront,SquareParking,PanelsTopLeft,School,Hospital,Dumbbell,UtensilsCrossed,Coffee,Fuel,Wrench,Cog,Sun,Gavel} from "lucide-react";
 import defaults from "./defaults.json";
+import type {CategorySettings} from "./settings";
 export const categoryIcons = {
   house: House,
   building: Building2,
@@ -92,7 +93,7 @@ export const iconLabels: Record<string,string> = {
   solar: "Energi",
   auction: "Lelang",
 };
-export type Category = {name:string;label:string;icon:string;showHome:boolean;sortOrder:number;version:number};
+export type Category = {name:string;label:string;icon:string;showHome:boolean;sortOrder:number;version:number;settings?:CategorySettings};
 export function CategoryIcon({name,size=26}:{name:string;size?:number}) {const Icon=categoryIcons[name as keyof typeof categoryIcons]||Building2;return <Icon size={size} strokeWidth={1.6}/>;}
 export function useCategories() {
  const [categories,setCategories]=useState<Category[]>(defaults.map(c=>({...c,version:1})));

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useDragSort } from "@/components/ui/use-drag-sort";
 import { UploadField } from "@/components/ui/upload-field";
 import { api, errorMessage } from "@/services/api";
 import { GuideContent, type Guide, type GuideBlock } from "./guide-content";
@@ -45,12 +46,13 @@ export function GuideEditor() {
         ),
       );
   }
-  function move(index: number, offset: number) {
+  const blockSort = useDragSort(guide?.blocks.length ?? 0, (from, to) => {
     if (!guide) return;
     const next = [...guide.blocks];
-    [next[index], next[index + offset]] = [next[index + offset], next[index]];
+    const [block] = next.splice(from, 1);
+    next.splice(to, 0, block);
     change(next);
-  }
+  });
   async function upload(index: number, file?: File) {
     if (!file) return;
     if (
@@ -158,26 +160,15 @@ export function GuideEditor() {
               }}
             />
           </label>
+          <p className="guide-sort-hint">Seret area kartu ke atas atau ke bawah untuk mengatur urutan teks dan gambar.</p>
+          <div className="sort-announcement" role="status" aria-live="polite">{blockSort.announcement}</div>
+          <div className={`guide-sort-list${blockSort.drag ? " is-sorting" : ""}`} ref={blockSort.listRef}>
           {guide.blocks.map((block, index) => (
-            <section className="guide-editor-block" key={index}>
+            <div className={`guide-editor-block guide-sort-card${blockSort.drag?.from === index ? " is-dragging" : ""}`} data-sort-index={index} key={index} {...blockSort.rowProps(index, `blok ${index + 1}`)}>
               <div className="guide-block-tools">
                 <strong>
                   {index + 1}. {block.type === "text" ? "Teks" : "Gambar"}
                 </strong>
-                <button
-                  disabled={index === 0}
-                  onClick={() => move(index, -1)}
-                  aria-label={`Naikkan blok ${index + 1}`}
-                >
-                  ↑ Naik
-                </button>
-                <button
-                  disabled={index === guide.blocks.length - 1}
-                  onClick={() => move(index, 1)}
-                  aria-label={`Turunkan blok ${index + 1}`}
-                >
-                  ↓ Turun
-                </button>
                 <button
                   onClick={() =>
                     change(guide.blocks.filter((_, i) => i !== index))
@@ -230,8 +221,9 @@ export function GuideEditor() {
                   </label>
                 </>
               )}
-            </section>
+            </div>
           ))}
+          </div>
           <div className="guide-editor-toolbar">
             <button
               disabled={guide.blocks.length >= 60}

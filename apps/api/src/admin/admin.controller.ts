@@ -17,6 +17,8 @@ import {
 import { AdminGuard } from "../auth/auth.guard";
 import { AuthRequest } from "../auth/auth.service";
 import { Database } from "../database/database.service";
+import { randomBytes } from "node:crypto";
+import {getCategorySettings, specValue} from "../category-settings";
 import {
   ArchiveDto,
   AssetDto,
@@ -32,6 +34,8 @@ const fields = [
   "saleMethod",
   "province",
   "city",
+  "district",
+  "village",
   "address",
   "price",
   "oldPrice",
@@ -43,6 +47,7 @@ const fields = [
   "certificate",
   "description",
   "featured",
+  "details",
 ] as const;
 @Controller("api/admin")
 @UseGuards(AdminGuard)
@@ -50,7 +55,7 @@ export class AdminController {
   constructor(private readonly db: Database) {}
   @Get("dashboard") async dashboard() {
     const [assets] = await this.db.query(
-      "SELECT COUNT(*) total, COALESCE(SUM(archived = 0),0) active, COALESCE(SUM(archived = 0 AND auctionDate >= NOW()),0) upcoming FROM assets",
+      "SELECT COUNT(*) total, COALESCE(SUM(archived = 0),0) active, COALESCE(SUM(archived = 0 AND saleMethod = 'Lelang' AND auctionDate >= NOW()),0) upcoming FROM assets",
     );
     const [interests] = await this.db.query(
       "SELECT COUNT(*) total, COALESCE(SUM(status = 'baru'),0) pending, COALESCE(SUM(status = 'diproses'),0) processing, COALESCE(SUM(status = 'selesai'),0) completed FROM interests",
@@ -65,37 +70,64 @@ export class AdminController {
       data: await this.db.query("SELECT * FROM assets ORDER BY id DESC"),
     };
   }
+  @Post("assets/generate-code") async generateCode() {
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const code = `BKK-${randomBytes(6).toString("hex").toUpperCase()}`;
+      const rows = await this.db.query("SELECT id FROM assets WHERE code = ? LIMIT 1", [code]);
+      if (!rows.length) return { code };
+    }
+    throw new ConflictException("Kode belum dapat dibuat. Silakan coba lagi.");
+  }
   @Get("assets/:id") async asset(@Param("id", ParseIntPipe) id: number) {
     const [row] = await this.db.query("SELECT * FROM assets WHERE id = ?", [
       id,
     ]);
     if (!row) throw new NotFoundException("Aset tidak ditemukan.");
-    return row;
+    const photos = await this.db.query("SELECT url FROM asset_photos WHERE asset_id=? ORDER BY position,id", [id]);
+    return Object.assign(row, { details: typeof row.details === "string" ? JSON.parse(row.details) : row.details || {}, photos: [...new Set([row.image, ...photos.map((photo) => photo.url)])] });
   }
-  private async checkCategory(name: string) {
-    const rows = await this.db.query("SELECT name FROM asset_categories WHERE name=?", [name]);
+  private async checkCategory(name: string, body: AssetDto) {
+    const rows = await this.db.query("SELECT name,settings FROM asset_categories WHERE name=?", [name]);
     if (!rows.length) throw new BadRequestException("Pilih kategori yang terdaftar di Master Kategori.");
+    const config=getCategorySettings(name,typeof rows[0].settings === "string" ? JSON.parse(rows[0].settings) : rows[0].settings);
+    const attributes=body.details?.attributes;
+    if(attributes && (Object.keys(attributes).length>40 || Object.entries(attributes).some(([key,value])=> !/^[a-zA-Z][a-zA-Z0-9_]{0,39}$/.test(key) || ["constructor","prototype"].includes(key) || !["string","number"].includes(typeof value) || (typeof value === "string" && value.length>500) || (typeof value === "number" && !Number.isFinite(value))))) throw new BadRequestException("Nilai spesifikasi tidak valid.");
+    for(const field of config.fields.filter(f=>f.enabled)) {
+      const value=specValue(body as unknown as Parameters<typeof specValue>[0],field.key);
+      const empty=value===undefined || value===null || value==="";
+      if(empty) {if(field.required) throw new BadRequestException(`${field.label} wajib diisi.`); continue;}
+      if(field.type==="number" && (typeof value!=="number" || !Number.isFinite(value) || (field.min!==undefined && value<field.min) || (field.max!==undefined && value>field.max))) throw new BadRequestException(`${field.label} di luar batas yang diizinkan.`);
+      if(field.type!=="number" && typeof value!=="string") throw new BadRequestException(`${field.label} harus berupa teks.`);
+      if(field.type==="select" && !field.options.includes(String(value))) throw new BadRequestException(`Pilihan ${field.label} tidak valid.`);
+    }
   }
   private values(body: AssetDto) {
+    if (body.village && !body.district)
+      throw new BadRequestException("Pilih kecamatan sebelum kelurahan/desa.");
+    if (body.photos?.length && body.photos[0] !== body.image)
+      throw new BadRequestException("Foto sampul harus menjadi foto pertama.");
     if (body.oldPrice && body.oldPrice < body.price)
       throw new BadRequestException(
         "Harga sebelumnya harus sama atau lebih besar dari harga limit.",
       );
     return fields.map((key) =>
-      key === "auctionDate"
-        ? new Date(new Date(body.auctionDate).getTime() + 7 * 3600000)
+      key === "details" ? JSON.stringify(body.details || {}) : key === "auctionDate"
+        ? body.saleMethod === "Lelang" && body.auctionDate
+          ? new Date(new Date(body.auctionDate).getTime() + 7 * 3600000)
             .toISOString()
             .slice(0, 19)
             .replace("T", " ")
+          : null
         : (body[key] ?? null),
     );
   }
   @Post("assets") async create(@Body() body: AssetDto) {
-    await this.checkCategory(body.category);
+    await this.checkCategory(body.category, body);
     const result = await this.db.execute(
       `INSERT INTO assets (${fields.join(",")}) VALUES (${fields.map(() => "?").join(",")})`,
       this.values(body),
     );
+    await this.savePhotos(result.insertId, body.photos || [body.image]);
     return this.asset(result.insertId);
   }
   @Put("assets/:id") async update(
@@ -104,12 +136,22 @@ export class AdminController {
   ) {
     const existing = await this.asset(id);
     body.province ??= existing.province;
-    await this.checkCategory(body.category);
+    const parentChanged = body.province !== existing.province || body.city !== existing.city;
+    body.district ??= parentChanged ? "" : existing.district;
+    body.village ??= parentChanged || body.district !== existing.district ? "" : existing.village;
+    await this.checkCategory(body.category, body);
     await this.db.execute(
       `UPDATE assets SET ${fields.map((key) => key + " = ?").join(",")} WHERE id = ?`,
       [...this.values(body), id],
     );
+    await this.savePhotos(id, body.photos || [body.image, ...existing.photos.filter((url: string) => url !== body.image)]);
     return this.asset(id);
+  }
+  private async savePhotos(id: number, photos: string[]) {
+    const ordered = [...new Set(photos)];
+    await this.db.execute("DELETE FROM asset_photos WHERE asset_id=?", [id]);
+    for (const [position, url] of ordered.entries())
+      await this.db.execute("INSERT INTO asset_photos(asset_id,url,position) VALUES(?,?,?)", [id, url, position]);
   }
   @Patch("assets/:id/archive") async archive(
     @Param("id", ParseIntPipe) id: number,

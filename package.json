@@ -7,7 +7,10 @@
   "scripts": {
     "dev": "concurrently -n WEB,API -c cyan,yellow \"npm run dev -w apps/web\" \"npm run dev -w apps/api\"",
     "build": "npm run build -w apps/api && npm run build -w apps/web",
-    "db:setup": "node scripts/setup-db.mjs && node scripts/setup-admin.mjs && node scripts/seed-sales-demo.mjs && node scripts/setup-gallery.mjs && node scripts/setup-guide.mjs && node scripts/setup-visitors.mjs && node scripts/setup-banners.mjs && node scripts/setup-categories.mjs && node scripts/setup-provinces.mjs",
+    "db:setup": "node scripts/setup-db.mjs && node scripts/setup-auction-date.mjs && node scripts/setup-admin.mjs && node scripts/setup-public-accounts.mjs && node scripts/setup-interest-chat.mjs && node scripts/seed-sales-demo.mjs && node scripts/setup-gallery.mjs && node scripts/setup-asset-details.mjs && node scripts/setup-guide.mjs && node scripts/setup-visitors.mjs && node scripts/setup-banners.mjs && node scripts/setup-categories.mjs && node scripts/setup-category-settings.mjs && node scripts/setup-provinces.mjs",
+    "db:chat": "node scripts/setup-interest-chat.mjs",
+    "db:auction-date": "node scripts/setup-auction-date.mjs",
+    "public:setup": "node scripts/setup-public-accounts.mjs",
     "test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "admin:setup": "node scripts/setup-admin.mjs",
     "format": "prettier --write \"apps/*/src/**/*.{ts,tsx,css}\" \"scripts/*.mjs\" \"tests/*.mjs\"",
@@ -16,7 +19,7 @@
     "db:guide": "node scripts/setup-guide.mjs",
     "db:visitors": "node scripts/setup-visitors.mjs",
     "db:banners": "node scripts/setup-banners.mjs",
-    "db:categories": "node scripts/setup-categories.mjs",
+    "db:categories": "node scripts/setup-categories.mjs && node scripts/setup-category-settings.mjs",
     "db:provinces": "node scripts/setup-provinces.mjs"
   },
   "devDependencies": {

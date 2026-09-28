@@ -1,6 +1,7 @@
 "use client";
 import { useRegions } from "../use-regions";
 import { matchesAsset } from "../filters";
+import {summarizeAssets} from "../summary";
 import { useCategories } from "@/features/categories/categories";
 import { PriceInput } from "@/components/ui/price-input";
 import { Select } from "@/components/ui/select";
@@ -13,7 +14,7 @@ import {
   Archive,
   RotateCcw,
   Building2,
-  SlidersHorizontal,
+  Layers3, Handshake, FileSignature, Gavel,
 } from "lucide-react";
 import { asetService } from "../services/aset-service";
 import type { Asset } from "../types";
@@ -25,7 +26,8 @@ import { notify } from "@/store/notification-store";
 export function AsetList() {
   const categories = useCategories();
   const [category,setCategory]=useState(""),[saleMethod,setSaleMethod]=useState(""),[province,setProvince]=useState(""),[city,setCity]=useState(""),[minPrice,setMinPrice]=useState(""),[maxPrice,setMaxPrice]=useState("");
-  const {provinces,regencies,provincesLoading,regenciesLoading,error:regionsError}=useRegions(province);
+  const [district,setDistrict]=useState(""),[village,setVillage]=useState("");
+  const {provinces,regencies,districts,villages,provincesLoading,regenciesLoading,districtsLoading,villagesLoading,error:regionsError}=useRegions(province,city,district);
   const [assets, setAssets] = useState<Asset[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
@@ -48,9 +50,11 @@ export function AsetList() {
     load();
   }, []);
   const rangeError = !!minPrice && !!maxPrice && Number(minPrice)>Number(maxPrice);
-  const visible = rangeError ? [] : assets.filter(a=>matchesAsset(a,{q,status:filter,category,saleMethod,province,city,minPrice,maxPrice}));
-  const activeFilterCount = [category, saleMethod, province, city, minPrice, maxPrice].filter(Boolean).length;
-  function resetFilters(){setQ("");setFilter("active");setCategory("");setSaleMethod("");setProvince("");setCity("");setMinPrice("");setMaxPrice("");}
+  const visible = rangeError ? [] : assets.filter(a=>matchesAsset(a,{q,status:filter,category,saleMethod,province,city,district,village,minPrice,maxPrice}));
+  const summary=summarizeAssets(rangeError?[]:assets.filter(a=>matchesAsset(a,{q,status:filter,category,saleMethod:"",province,city,district,village,minPrice,maxPrice})));
+  const summaryIcons=[Layers3,Handshake,FileSignature,Gavel];
+  const activeFilterCount = [category, saleMethod, province, city, district, village, minPrice, maxPrice].filter(Boolean).length;
+  function resetFilters(){setQ("");setFilter("active");setCategory("");setSaleMethod("");setProvince("");setCity("");setDistrict("");setVillage("");setMinPrice("");setMaxPrice("");}
   async function archive() {
     if (!selected) return;
     setBusy(true);
@@ -72,56 +76,56 @@ export function AsetList() {
   }
   return (
     <>
-      <div className="admin-page-heading">
-        <div>
-          <span className="admin-eyebrow">KATALOG LELANG BKK JATENG</span>
-          <h1>Kelola aset</h1>
-          <p>Pastikan informasi dan jadwal aset selalu diperbarui.</p>
-        </div>
-        <Link href="/aset/baru" className="admin-button admin-button-primary">
-          <Plus size={17} />
-          Tambah Aset
-        </Link>
-      </div>
-      <div className="admin-panel asset-list-panel">
-        <div className="admin-table-toolbar">
-          <div className="admin-search">
-            <Search size={17} />
-            <input
-              aria-label="Cari aset"
-              placeholder="Cari nama, kode, atau lokasi aset…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+      <section className="admin-panel admin-filter-card asset-filter-card" aria-label="Filter aset">
+        <div className="admin-filter-card-header">
+          <div>
+            <span className="admin-eyebrow">KATALOG LELANG BKK JATENG</span>
+            <h1>Kelola aset</h1>
+            <p>Pastikan informasi dan jadwal aset selalu diperbarui.</p>
+            <small className="asset-summary-count" aria-live="polite">{loading?"Memuat ringkasan...":error?"Ringkasan belum tersedia":`${visible.length} dari ${assets.length} aset ditampilkan`}</small>
           </div>
-          <div className="asset-status-control">
-            <Select label="Status aset" name="status" value={filter} onChange={setFilter}
-              options={[{value:"active",label:"Aset aktif"},{value:"archived",label:"Diarsipkan"},{value:"all",label:"Semua aset"}]} />
-          </div>
-        </div>
-        <div className="asset-filter-panel">
-          <div className="asset-filter-heading">
-            <div>
-              <span className="asset-filter-heading-icon"><SlidersHorizontal size={18} /></span>
-              <div><strong>Filter aset</strong><small>Persempit daftar sesuai kebutuhan</small></div>
-              {activeFilterCount > 0 && <span className="asset-filter-count">{activeFilterCount} aktif</span>}
+          <div className="admin-filter-card-actions asset-summary-actions">
+            <div className="asset-summary-cards" aria-label="Ringkasan nilai aset per metode; mengikuti filter selain metode penjualan">
+              {summary.map((item,index)=>{const Icon=summaryIcons[index];return <button type="button" key={item.label} className={`asset-metric-card asset-metric-${index}`} aria-pressed={saleMethod===item.method} disabled={loading||!!error} onClick={()=>setSaleMethod(item.method)} title={`${item.label}: ${currency(item.total)}, ${item.count} aset. Klik untuk memfilter metode.`}>
+                <span className="asset-metric-label"><Icon size={15}/>{item.label}</span>
+                <strong>{loading||error?"—":currency(item.total)}</strong>
+                <small>{loading?"Memuat...":error?"Belum tersedia":`${item.count} aset`}</small>
+              </button>;})}
             </div>
-            <button type="button" className="asset-filter-reset" onClick={resetFilters} disabled={!activeFilterCount && !q && filter === "active"}><RotateCcw size={15} />Reset filter</button>
+            <Link href="/aset/baru" className="admin-button admin-button-primary">
+              <Plus size={17} />Tambah Aset
+            </Link>
           </div>
-          <div className="asset-filter-grid">
-            <Select label="Kategori" name="category" value={category} onChange={setCategory} options={[{value:"",label:"Semua kategori"},...categories.map(c=>({value:c.name,label:c.label}))]} />
-            <Select label="Metode penjualan" name="saleMethod" value={saleMethod} onChange={setSaleMethod} options={[{value:"",label:"Semua metode"},...["Jual Beli","Lelang","Cessie"].map(m=>({value:m,label:m}))]} />
-            <Select label="Provinsi" name="province" value={province} onChange={value=>{setProvince(value);setCity("");}} disabled={provincesLoading} options={[{value:"",label:provincesLoading?"Memuat provinsi...":"Semua provinsi"},...provinces.map(p=>({value:p.name,label:p.name}))]} />
-            <Select label="Kota / kabupaten" name="city" value={city} onChange={setCity} disabled={!province || regenciesLoading} options={[{value:"",label:!province?"Pilih provinsi dahulu":regenciesLoading?"Memuat kota/kabupaten...":"Semua kota / kabupaten"},...regencies.map(c=>({value:c.name,label:c.name}))]} />
-          </div>
-          <div className="asset-price-filters">
-            <PriceInput label="Harga minimal" name="minPrice" value={minPrice} onChange={setMinPrice} placeholder="0"/>
-            <span className="asset-price-divider" aria-hidden="true">sampai</span>
-            <PriceInput label="Harga maksimal" name="maxPrice" value={maxPrice} onChange={setMaxPrice} placeholder="Tanpa batas"/>
-          </div>
-          {rangeError&&<p role="alert" className="asset-filter-error">Harga maksimal harus sama atau lebih besar dari harga minimal.</p>}
-          {regionsError&&<p role="alert" className="asset-filter-error">{regionsError}</p>}
         </div>
+        <div className="asset-filter-grid">
+          <div className="asset-filter-search">
+            <label htmlFor="admin-asset-search">Cari aset</label>
+            <div className="admin-search">
+              <Search size={17} />
+              <input
+                id="admin-asset-search"
+                placeholder="Cari nama, kode, atau lokasi aset…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+          </div>
+          <Select label="Status aset" name="status" value={filter} onChange={setFilter}
+            options={[{value:"active",label:"Aset aktif"},{value:"archived",label:"Diarsipkan"},{value:"all",label:"Semua aset"}]} />
+          <Select label="Kategori" name="category" value={category} onChange={setCategory} options={[{value:"",label:"Semua kategori"},...categories.map(c=>({value:c.name,label:c.label}))]} />
+          <Select label="Metode penjualan" name="saleMethod" value={saleMethod} onChange={setSaleMethod} options={[{value:"",label:"Semua metode"},...["Jual Beli","Lelang","Cessie"].map(m=>({value:m,label:m}))]} />
+          <Select label="Provinsi" name="province" value={province} onChange={value=>{setProvince(value);setCity("");setDistrict("");setVillage("");}} disabled={provincesLoading} options={[{value:"",label:provincesLoading?"Memuat provinsi...":"Semua provinsi"},...provinces.map(p=>({value:p.name,label:p.name}))]} />
+          <Select label="Kota / kabupaten" name="city" value={city} onChange={value=>{setCity(value);setDistrict("");setVillage("");}} disabled={!province || regenciesLoading} options={[{value:"",label:!province?"Pilih provinsi dahulu":regenciesLoading?"Memuat kota/kabupaten...":"Semua kota / kabupaten"},...regencies.map(c=>({value:c.name,label:c.name}))]} />
+          <Select label="Kecamatan" name="district" value={district} onChange={value=>{setDistrict(value);setVillage("");}} disabled={!city || districtsLoading} options={[{value:"",label:!city?"Pilih kota/kabupaten dahulu":districtsLoading?"Memuat kecamatan...":"Semua kecamatan"},...districts.map(c=>({value:c.name,label:c.name}))]} />
+          <Select label="Kelurahan / desa" name="village" value={village} onChange={setVillage} disabled={!district || villagesLoading} options={[{value:"",label:!district?"Pilih kecamatan dahulu":villagesLoading?"Memuat kelurahan/desa...":"Semua kelurahan / desa"},...villages.map(c=>({value:c.name,label:c.name}))]} />
+          <PriceInput label="Harga minimal" name="minPrice" value={minPrice} onChange={setMinPrice} placeholder="0"/>
+          <PriceInput label="Harga maksimal" name="maxPrice" value={maxPrice} onChange={setMaxPrice} placeholder="Tanpa batas"/>
+          <div className="asset-filter-reset-slot"><button type="button" className="asset-filter-reset" onClick={resetFilters} disabled={!activeFilterCount && !q && filter === "active"}><RotateCcw size={15} />Reset filter</button></div>
+        </div>
+        {rangeError&&<p role="alert" className="asset-filter-error">Harga maksimal harus sama atau lebih besar dari harga minimal.</p>}
+        {regionsError&&<p role="alert" className="asset-filter-error">{regionsError}</p>}
+      </section>
+      <div className="admin-panel asset-list-panel">
         {error ? (
           <div className="admin-empty">
             <p role="alert">{error}</p>
@@ -163,7 +167,7 @@ export function AsetList() {
                       </div>
                     </td>
                     <td className="table-price">{currency(a.price)}</td>
-                    <td>{formatDate(a.auctionDate)}</td>
+                    <td>{a.saleMethod === "Lelang" && a.auctionDate ? formatDate(a.auctionDate) : "—"}</td>
                     <td>
                       <span
                         className={

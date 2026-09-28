@@ -111,8 +111,9 @@ export function ScheduleCalendar({ period }: { period: string }) {
     setMonth({ year: next.getUTCFullYear(), month: next.getUTCMonth() });
     setSelectedDate(key(next.getUTCFullYear(), next.getUTCMonth(), 1));
   }
-  const groups = new Map<string, CatalogAsset[]>();
-  for (const asset of assets) {
+  const scheduledAssets = assets.filter((asset): asset is CatalogAsset & { auctionDate: string } => asset.saleMethod === "Lelang" && !!asset.auctionDate);
+  const groups = new Map<string, (CatalogAsset & { auctionDate: string })[]>();
+  for (const asset of scheduledAssets) {
     const date = dayKey(new Date(asset.auctionDate));
     groups.set(date, [...(groups.get(date) || []), asset]);
   }

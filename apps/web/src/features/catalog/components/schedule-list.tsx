@@ -19,7 +19,8 @@ export function ScheduleList({
   onOpen: (asset: CatalogAsset) => void;
   onFavorite: (id: number) => void;
 }) {
-  const groups = Map.groupBy(assets, (asset) =>
+  const scheduledAssets = assets.filter((asset): asset is CatalogAsset & { auctionDate: string } => asset.saleMethod === "Lelang" && !!asset.auctionDate);
+  const groups = Map.groupBy(scheduledAssets, (asset) =>
     new Date(asset.auctionDate).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "long",

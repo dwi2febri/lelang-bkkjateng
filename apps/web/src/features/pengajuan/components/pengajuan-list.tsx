@@ -8,6 +8,7 @@ import {
   Files,
   ChevronLeft,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import { usePengajuan } from "../hooks/use-pengajuan";
 import {
@@ -25,50 +26,53 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
   const { result, loading, error, reload } = usePengajuan(term, status, page);
   return (
     <>
-      <div className="admin-page-heading">
-        <div>
-          <span className="admin-eyebrow">
-            {approval ? "KELOLA KOMUNIKASI" : "HUBUNGAN CALON PESERTA"}
-          </span>
-          <h1>{approval ? "Tindak lanjut pengajuan" : "Pengajuan minat"}</h1>
-          <p>
-            {approval
+      <section className="admin-panel admin-filter-card pengajuan-filter-card" aria-label="Filter pengajuan">
+        <div className="admin-filter-card-header">
+          <div>
+            <span className="admin-eyebrow">
+              {approval ? "KELOLA KOMUNIKASI" : "HUBUNGAN CALON PESERTA"}
+            </span>
+            <h1>{approval ? "Tindak lanjut pengajuan" : "Pengajuan minat"}</h1>
+            <p>{approval
               ? "Tinjau pengajuan masuk dan catat perkembangan penanganannya."
-              : "Seluruh permintaan informasi aset, tersusun dalam satu tempat."}
-          </p>
+              : "Seluruh permintaan informasi aset, tersusun dalam satu tempat."}</p>
+          </div>
+          <div className="admin-filter-card-actions">
+            <span className="admin-filter-total">Total: <strong>{result.total}</strong> pengajuan</span>
+            <Link href="/pengajuan/baru" className="admin-button admin-button-primary">
+              <Plus size={17} />Pengajuan Baru
+            </Link>
+          </div>
         </div>
-        <Link
-          href="/pengajuan/baru"
-          className="admin-button admin-button-primary"
-        >
-          <Plus size={17} />
-          Pengajuan Baru
-        </Link>
-      </div>
-      <div className="admin-panel pengajuan-list-panel">
-        <div className="admin-table-toolbar">
-          <form
-            className="admin-search"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setTerm(q);
-              setPage(1);
-            }}
-          >
-            <Search size={17} />
-            <input
-              aria-label="Cari pengajuan"
-              placeholder="Cari nama, email, atau aset…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <button type="submit">Cari</button>
-          </form>
+        <div className="pengajuan-filter-grid">
+          <div className="pengajuan-filter-search">
+            <label htmlFor="admin-pengajuan-search">Cari pengajuan</label>
+            <form className="admin-search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setTerm(q);
+                setPage(1);
+              }}
+            >
+              <Search size={17} />
+              <input
+                id="admin-pengajuan-search"
+                placeholder="Cari nama, email, atau aset…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+              <button type="submit">Cari</button>
+            </form>
+          </div>
           <Select label="Filter status" name="status" value={status}
             onChange={(value) => { setStatus(value); setPage(1); }}
             options={[{ value: "", label: "Semua status" },
               ...Object.entries(statusLabels).map(([key, label]) => ({ value: key, label }))]} />
+          <div className="asset-filter-reset-slot"><button type="button" className="asset-filter-reset" disabled={!q && !term && status === (approval ? "baru" : "")}
+            onClick={() => { setQ(""); setTerm(""); setStatus(approval ? "baru" : ""); setPage(1); }}><RotateCcw size={15} />Reset filter</button></div>
         </div>
+      </section>
+      <div className="admin-panel pengajuan-list-panel">
         {error ? (
           <div className="admin-empty" role="alert">
             <p>{error}</p>

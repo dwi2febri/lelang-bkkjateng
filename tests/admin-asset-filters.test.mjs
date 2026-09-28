@@ -13,3 +13,12 @@ test('filter aset: kombinasi kategori, metode, wilayah dan batas harga inklusif'
  assert.equal(matchesAsset({...asset,city:'Semarang'},{...filters,city:'Kota Semarang'}),true);
  assert.equal(matchesAsset({...asset,province:'DKI Jakarta'},{...filters,province:'Daerah Khusus Ibukota Jakarta'}),true);
 });
+
+test('filter kecamatan dan kelurahan menggabungkan wilayah dan pencarian',()=>{
+ const located={...asset,district:'Semarang Tengah',village:'Miroto'};
+ assert.equal(matchesAsset(located,{...filters,district:'Semarang Tengah',village:'Miroto'}),true);
+ assert.equal(matchesAsset(located,{...filters,district:'Semarang Utara',village:'Miroto'}),false);
+ assert.equal(matchesAsset(located,{...filters,village:'Sekayu'}),false);
+ assert.equal(matchesAsset(located,{...filters,q:'miroto'}),true);
+ assert.equal(matchesAsset(asset,{...filters,district:'Semarang Tengah'}),false);
+});

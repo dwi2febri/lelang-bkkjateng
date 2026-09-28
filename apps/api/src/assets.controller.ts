@@ -1,4 +1,5 @@
 import { Database } from "./database/database.service";
+import {getCategorySettings} from "./category-settings";
 import {
   Body,
   Controller,
@@ -24,6 +25,9 @@ import {
   IsDateString,
   IsUUID,
 } from "class-validator";
+import { Req } from "@nestjs/common";
+import type { Request } from "express";
+import { PublicAccountService } from "./public-account/public-account.service";
 import { Type } from "class-transformer";
 
 class SearchDto {
@@ -84,7 +88,7 @@ class ViewDto {
 }
 @Controller("api")
 export class AssetsController {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly db: Database, private readonly account: PublicAccountService) {}
   @Get("health") async health() {
     await this.db.query("SELECT 1");
     return { status: "ok", database: "mysql" };
@@ -108,6 +112,7 @@ export class AssetsController {
       where.push("saleMethod = ?");
       values.push(query.saleMethod);
     }
+    if (query.period) where.push("saleMethod = 'Lelang' AND auctionDate IS NOT NULL");
     if (query.tag === "featured") where.push("featured = 1");
     if (query.tag === "discount") where.push("oldPrice > price");
     if (query.minPrice !== undefined) {
@@ -147,7 +152,7 @@ export class AssetsController {
       recommended: "featured DESC, id ASC",
       lowest: "price ASC",
       highest: "price DESC",
-      soonest: "auctionDate ASC",
+      soonest: "auctionDate IS NULL, auctionDate ASC",
     }[query.sort || "recommended"];
     const clause = "WHERE " + where.join(" AND ");
     const [count] = await this.db.query(
@@ -159,7 +164,7 @@ export class AssetsController {
       values,
     );
     return {
-      data,
+      data: data.map(row=>({...row,details:typeof row.details==="string"?JSON.parse(row.details):row.details||{}})),
       total: count.total,
       page: query.page,
       pageSize: query.pageSize,
@@ -179,8 +184,11 @@ export class AssetsController {
       "SELECT (SELECT COUNT(*) FROM asset_views WHERE asset_id = ?) viewCount, (SELECT COUNT(*) FROM interests WHERE asset_id = ?) interestCount",
       [rows[0].id, rows[0].id],
     );
+    const [category] = await this.db.query("SELECT settings FROM asset_categories WHERE name=?",[rows[0].category]);
     return {
       ...rows[0],
+      categorySettings: getCategorySettings(rows[0].category,typeof category?.settings==="string"?JSON.parse(category.settings):category?.settings),
+      details: typeof rows[0].details === "string" ? JSON.parse(rows[0].details) : rows[0].details || {},
       id: rows[0].id as number,
       code: rows[0].code as string,
       photos: [
@@ -211,11 +219,15 @@ export class AssetsController {
   @Post("assets/:slug/interests") @HttpCode(201) async interest(
     @Param("slug") slug: string,
     @Body() body: InterestDto,
+    @Req() req: Request,
   ) {
     const asset = await this.detail(slug);
+    const user = await this.account.maybeUser(req);
+    if (user && user.email !== body.email.trim().toLowerCase())
+      throw new BadRequestException("Gunakan email akun Anda untuk pengajuan ini.");
     await this.db.query(
-      "INSERT INTO interests (asset_id, name, email, phone, message, consent) VALUES (?, ?, ?, ?, ?, ?)",
-      [asset.id, body.name, body.email, body.phone, body.message, body.consent],
+      "INSERT INTO interests (asset_id, name, email, phone, message, consent, public_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [asset.id, body.name, body.email, body.phone, body.message, body.consent, user?.id || null],
     );
     return { message: "Minat Anda berhasil tersimpan.", reference: asset.code };
   }

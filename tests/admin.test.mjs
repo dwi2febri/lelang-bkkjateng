@@ -135,6 +135,9 @@ test("alur aset dan pengajuan tersimpan, riwayat atomik, versi konflik, arsip da
     category: "Rumah",
     saleMethod: "Cessie",
     city: "Semarang",
+    province: "Jawa Tengah",
+    district: "Semarang Tengah",
+    village: "Miroto",
     address: "Alamat pengujian otomatis",
     price: 400000000,
     oldPrice: 500000000,
@@ -142,35 +145,65 @@ test("alur aset dan pengajuan tersimpan, riwayat atomik, versi konflik, arsip da
     building: 80,
     bedrooms: 2,
     image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9",
-    auctionDate: "2026-12-10T03:00:00.000Z",
     certificate: "SHM",
     description: "Data sementara untuk pengujian integrasi admin.",
     featured: false,
   };
   try {
+    const generated = await request("/admin/assets/generate-code", { method: "POST", headers, body: "{}" });
+    assert.equal(generated.status, 201);
+    const { code } = await generated.json();
+    assert.match(code, /^BKK-[A-F0-9]{12}$/);
+    input.code = code;
+    const missingAuctionDate = await request("/admin/assets", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ ...input, saleMethod: "Lelang" }),
+    });
+    assert.equal(missingAuctionDate.status, 400);
     const created = await request("/admin/assets", {
       method: "POST",
       headers,
       body: JSON.stringify(input),
     });
-    assert.equal(created.status, 201);
+    assert.equal(created.status, 201, created.status === 201 ? undefined : await created.text());
     const asset = await created.json();
     assetId = asset.id;
+    assert.equal(asset.code, input.code);
     assert.equal(asset.saleMethod, "Cessie");
-    assert.equal(
-      new Date(asset.auctionDate).toISOString(),
-      input.auctionDate,
-      "Jadwal WIB harus round-trip tanpa bergeser",
-    );
+    assert.equal(asset.district, input.district);
+    assert.equal(asset.village, input.village);
+    assert.equal(asset.auctionDate, null, "Aset Cessie tidak memerlukan jadwal lelang");
     const detail = await request("/assets/" + input.slug);
     assert.equal(detail.status, 200);
+    const publicAsset = await detail.json();
+    assert.equal(publicAsset.district, input.district);
+    assert.equal(publicAsset.village, input.village);
     const updated = await request("/admin/assets/" + assetId, {
       method: "PUT",
       headers,
-      body: JSON.stringify({ ...input, price: 390000000 }),
+      body: JSON.stringify({ ...input, price: 390000000, village: "Brumbungan" }),
     });
     assert.equal(updated.status, 200);
-    assert.equal((await updated.json()).price, 390000000);
+    const updatedAsset = await updated.json();
+    assert.equal(updatedAsset.price, 390000000);
+    assert.equal(updatedAsset.district, input.district);
+    assert.equal(updatedAsset.village, "Brumbungan");
+    const auctionDate = "2026-12-10T03:00:00.000Z";
+    const scheduled = await request("/admin/assets/" + assetId, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ ...input, saleMethod: "Lelang", auctionDate }),
+    });
+    assert.equal(scheduled.status, 200);
+    assert.equal(new Date((await scheduled.json()).auctionDate).toISOString(), auctionDate, "Jadwal WIB harus round-trip tanpa bergeser");
+    const unscheduled = await request("/admin/assets/" + assetId, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({ ...input, auctionDate }),
+    });
+    assert.equal(unscheduled.status, 200);
+    assert.equal((await unscheduled.json()).auctionDate, null, "Tanggal lama dibersihkan saat metode bukan Lelang");
     const invalid = await request("/admin/assets/" + assetId, {
       method: "PUT",
       headers,

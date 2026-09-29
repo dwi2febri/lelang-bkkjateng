@@ -10,6 +10,8 @@ import {
   Query,
   HttpCode,
   BadRequestException,
+  ConflictException,
+  Header,
 } from "@nestjs/common";
 import {
   IsEmail,
@@ -29,6 +31,7 @@ import { Req } from "@nestjs/common";
 import type { Request } from "express";
 import { PublicAccountService } from "./public-account/public-account.service";
 import { Type } from "class-transformer";
+import type { RowDataPacket } from "mysql2/promise";
 
 class SearchDto {
   @IsOptional() @IsString() @Length(0, 100) q?: string;
@@ -216,6 +219,16 @@ export class AssetsController {
     );
     return stats;
   }
+  @Get("assets/:slug/interest-status")
+  @Header("Cache-Control", "private, no-store")
+  async interestStatus(@Param("slug") slug: string, @Req() req: Request) {
+    const user = await this.account.user(req);
+    const rows = await this.db.query(
+      "SELECT i.id FROM interests i JOIN assets a ON a.id=i.asset_id WHERE a.slug=? AND (i.public_user_id=? OR (i.public_user_id IS NULL AND LOWER(TRIM(i.email))=?)) LIMIT 1",
+      [slug, user.id, user.email.toLowerCase()],
+    );
+    return { submitted: rows.length > 0 };
+  }
   @Post("assets/:slug/interests") @HttpCode(201) async interest(
     @Param("slug") slug: string,
     @Body() body: InterestDto,
@@ -223,12 +236,29 @@ export class AssetsController {
   ) {
     const asset = await this.detail(slug);
     const user = await this.account.maybeUser(req);
-    if (user && user.email !== body.email.trim().toLowerCase())
-      throw new BadRequestException("Gunakan email akun Anda untuk pengajuan ini.");
-    await this.db.query(
-      "INSERT INTO interests (asset_id, name, email, phone, message, consent, public_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [asset.id, body.name, body.email, body.phone, body.message, body.consent, user?.id || null],
-    );
+    if (user) this.account.checkMutation(req);
+    const applicant = user || { name: body.name, email: body.email.trim().toLowerCase(), phone: body.phone };
+    const connection = await this.db.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      // Serialize submissions for this asset, including requests from separate tabs.
+      await connection.execute("SELECT id FROM assets WHERE id=? FOR UPDATE", [asset.id]);
+      const [existing] = await connection.execute<RowDataPacket[]>(
+        "SELECT id FROM interests WHERE asset_id=? AND (public_user_id=? OR LOWER(TRIM(email))=?) LIMIT 1 FOR UPDATE",
+        [asset.id, user?.id || null, applicant.email.toLowerCase()],
+      );
+      if (existing.length) throw new ConflictException("Anda sudah mengajukan minat pada aset ini. Lihat History Pengajuan untuk tindak lanjut.");
+      await connection.execute(
+        "INSERT INTO interests (asset_id, name, email, phone, message, consent, public_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [asset.id, applicant.name, applicant.email, applicant.phone, body.message, body.consent, user?.id || null],
+      );
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
     return { message: "Minat Anda berhasil tersimpan.", reference: asset.code };
   }
 }

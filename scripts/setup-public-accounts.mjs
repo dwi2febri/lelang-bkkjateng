@@ -19,6 +19,13 @@ try {
     expires_at DATETIME NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX(expires_at), FOREIGN KEY(user_id) REFERENCES public_users(id) ON DELETE CASCADE
   )`);
+  const [activeColumns] = await db.execute("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='public_users' AND COLUMN_NAME='active'");
+  if (!activeColumns.length) await db.query("ALTER TABLE public_users ADD COLUMN active BOOLEAN NOT NULL DEFAULT TRUE");
+  await db.query(`CREATE TABLE IF NOT EXISTS public_password_resets (
+    user_id INT PRIMARY KEY, token_hash CHAR(64) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL, sent_at DATETIME NOT NULL,
+    INDEX(expires_at), FOREIGN KEY(user_id) REFERENCES public_users(id) ON DELETE CASCADE
+  )`);
   await db.query(`CREATE TABLE IF NOT EXISTS public_email_codes (
     email VARCHAR(150) PRIMARY KEY, code_hash VARCHAR(200) NOT NULL,
     expires_at DATETIME NOT NULL, attempts INT NOT NULL DEFAULT 0,

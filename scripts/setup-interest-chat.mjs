@@ -23,5 +23,13 @@ try {
     FOREIGN KEY (admin_id) REFERENCES admin_users(id) ON DELETE SET NULL,
     FOREIGN KEY (public_user_id) REFERENCES public_users(id) ON DELETE SET NULL
   )`);
+  await db.query(`CREATE TABLE IF NOT EXISTS interest_chat_reads (
+    interest_id INT NOT NULL,
+    public_user_id INT NOT NULL,
+    last_read_message_id BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (interest_id,public_user_id),
+    FOREIGN KEY (interest_id) REFERENCES interests(id) ON DELETE CASCADE,
+    FOREIGN KEY (public_user_id) REFERENCES public_users(id) ON DELETE CASCADE
+  )`);
   console.log("Migrasi chat pengajuan selesai.");
 } finally { await db.end(); }

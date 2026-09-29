@@ -13,7 +13,7 @@ import {
   LayoutDashboard,
   Files,
   BookOpen,
-  ClipboardCheck,
+  Users,
   X,
 } from "lucide-react";
 const groups = [
@@ -23,8 +23,6 @@ const groups = [
   ] },
   { id: "interests", label: "Pengajuan Minat", icon: Files, links: [
     { href: "/pengajuan", label: "Daftar Pengajuan", icon: Files },
-    { href: "/pengajuan/baru", label: "Tambah Pengajuan", icon: Plus },
-    { href: "/approval", label: "Tindak Lanjut", icon: ClipboardCheck },
   ] },
 ];
 function activeLink(path: string, href: string) {
@@ -79,6 +77,7 @@ export function Sidebar({
           <Link href="/master-kategori" onClick={onClose} className={pathname.startsWith("/master-kategori") ? "active" : ""} aria-current={pathname.startsWith("/master-kategori") ? "page" : undefined}><Tags size={19} />Master Kategori</Link>
           <Link href="/kelola-banner" onClick={onClose} className={pathname === "/kelola-banner" ? "active" : ""} aria-current={pathname === "/kelola-banner" ? "page" : undefined}><Images size={19} />Pengaturan Banner</Link>
           <Link href="/kelola-panduan" onClick={onClose} className={pathname === "/kelola-panduan" ? "active" : ""} aria-current={pathname === "/kelola-panduan" ? "page" : undefined}><BookOpen size={19} />Panduan Lelang</Link>
+          <Link href="/manajemen-user" onClick={onClose} className={pathname.startsWith("/manajemen-user") ? "active" : ""} aria-current={pathname.startsWith("/manajemen-user") ? "page" : undefined}><Users size={19} />Manajemen User</Link>
         </div>
         <div className="sidebar-bottom">
           <Link href="/" className="portal-link">

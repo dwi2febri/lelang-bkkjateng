@@ -53,9 +53,16 @@ test("status publik mengikuti admin dan chat hanya untuk pemohon saat diproses",
     assert.ok(!JSON.stringify(entry).includes("Catatan internal rahasia"));
     assert.equal((await post(path, { body: "  Pesan pemohon  " }, cookies[0])).status, 201);
     assert.equal((await post(adminPath, { body: "Balasan pengelola" }, cookies[2], "BKKAdmin")).status, 201);
+    const unread = await (await get("/public-account/history", cookies[0])).json();
+    assert.equal(unread.find(item => item.id === ids.interest).unreadCount, 1);
     const publicChat = await (await get(path, cookies[0])).json();
     assert.deepEqual(publicChat.messages.map(item => item.body), ["Pesan pemohon", "Balasan pengelola"]);
+    assert.equal((await (await get("/public-account/history", cookies[0])).json()).find(item => item.id === ids.interest).unreadCount, 1, "mengambil pesan saja belum menandainya dibaca");
     assert.equal((await get(path, cookies[1])).status, 404);
+    const readPath = `${path}/read`;
+    assert.equal((await post(readPath, { through: publicChat.messages.at(-1).id }, cookies[1])).status, 404);
+    assert.equal((await post(readPath, { through: publicChat.messages.at(-1).id }, cookies[0])).status, 200);
+    assert.equal((await (await get("/public-account/history", cookies[0])).json()).find(item => item.id === ids.interest).unreadCount, 0);
     const closed = await post(`/admin/pengajuan/${ids.interest}/status`, { status: "selesai", notes: "Selesai", version: 1 }, cookies[2], "BKKAdmin", "PATCH");
     assert.equal(closed.status, 200);
     assert.equal((await post(path, { body: "Pesan setelah selesai" }, cookies[0])).status, 403);

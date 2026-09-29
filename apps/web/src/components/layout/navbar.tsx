@@ -18,7 +18,7 @@ export function Navbar({
   const path = usePathname();
   const [busy, setBusy] = useState(false);
   const { logout } = useAuth();
-  const title = path.startsWith("/master-kategori") ? "Master Kategori" : path.startsWith("/kelola-banner") ? "Pengaturan Banner" : path.startsWith("/kelola-panduan")
+  const title = path.startsWith("/manajemen-user") ? "Manajemen User" : path.startsWith("/master-kategori") ? "Master Kategori" : path.startsWith("/kelola-banner") ? "Pengaturan Banner" : path.startsWith("/kelola-panduan")
     ? "Panduan Lelang"
     : path.startsWith("/aset")
       ? "Kelola Aset"

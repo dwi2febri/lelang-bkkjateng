@@ -13,6 +13,11 @@ class RegisterDto extends CodeDto {
   @IsString() confirmation!: string;
 }
 class LoginDto extends EmailDto { @IsString() password!: string; }
+class ResetPasswordDto {
+  @Matches(/^[a-f0-9]{64}$/) token!: string;
+  @IsString() @Length(12, 128) password!: string;
+  @IsString() confirmation!: string;
+}
 class FavoriteIdsDto {
   @IsArray() @ArrayMaxSize(200) @IsInt({each:true}) @Min(1,{each:true}) @Max(2147483647,{each:true}) ids!: number[];
 }
@@ -25,6 +30,7 @@ export class PublicAccountController {
   @Post("preview") @HttpCode(200) preview(@Body() body: CodeDto, @Req() req: Request) { return this.account.preview(body.email, body.code, req); }
   @Post("register") @HttpCode(201) register(@Body() body: RegisterDto, @Req() req: Request, @Res({passthrough:true}) res: Response) { return this.account.register(body, req, res); }
   @Post("login") @HttpCode(200) login(@Body() body: LoginDto, @Req() req: Request, @Res({passthrough:true}) res: Response) { return this.account.login(body.email, body.password, req, res); }
+  @Post("reset-password") @HttpCode(200) resetPassword(@Body() body: ResetPasswordDto, @Req() req: Request) { return this.account.resetPassword(body.token, body.password, body.confirmation, req); }
   @Post("logout") @HttpCode(200) logout(@Req() req: Request, @Res({passthrough:true}) res: Response) { return this.account.logout(req, res); }
   @Get("me") me(@Req() req: Request) { return this.account.user(req); }
   @Get("history") history(@Req() req: Request) { return this.account.history(req); }

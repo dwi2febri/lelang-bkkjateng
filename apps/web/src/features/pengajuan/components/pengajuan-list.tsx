@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  UserRound,
+  UserRoundCheck,
 } from "lucide-react";
 import { usePengajuan } from "../hooks/use-pengajuan";
 import {
@@ -99,6 +101,7 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
               <thead>
                 <tr>
                   <th>Pemohon</th>
+                  <th>Status Login</th>
                   <th>Aset diminati</th>
                   <th>Tanggal masuk</th>
                   <th>Status</th>
@@ -118,6 +121,13 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
                           <small>{item.email}</small>
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      <span className={`applicant-account-badge ${item.public_user_id ? "registered" : "guest"}`}
+                        title={item.public_user_id ? "Pengajuan terhubung ke akun terdaftar" : "Pengajuan belum terhubung ke akun terdaftar"}>
+                        {item.public_user_id ? <UserRoundCheck size={14} aria-hidden="true" /> : <UserRound size={14} aria-hidden="true" />}
+                        {item.public_user_id ? "Sudah login" : "Belum punya akun"}
+                      </span>
                     </td>
                     <td>
                       <strong>{item.asset_title}</strong>

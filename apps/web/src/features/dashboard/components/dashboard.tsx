@@ -6,7 +6,6 @@ import {
   Files,
   Clock3,
   CalendarDays,
-  Plus,
   ArrowUpRight,
   ArrowRight,
   CheckCircle2,
@@ -20,6 +19,7 @@ import type { Interest } from "@/features/pengajuan/types";
 import { StatusBadge } from "@/features/approval/components/status-badge";
 import { currency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DashboardAnalytics } from "./dashboard-analytics";
 type Overview = {
   assets: { total: number; active: number; upcoming: number };
   interests: {
@@ -34,6 +34,7 @@ export function Dashboard() {
   const { user } = useAuth();
   const [data, setData] = useState<Overview | null>(null),
     [assets, setAssets] = useState<Asset[]>([]),
+    [portfolio, setPortfolio] = useState<Asset[]>([]),
     [error, setError] = useState("");
   async function load() {
     setError("");
@@ -43,6 +44,7 @@ export function Dashboard() {
         asetService.list(),
       ]);
       setData(overview.data);
+      setPortfolio(list);
       setAssets(
         list
           .filter((a): a is Asset & { auctionDate: string } =>
@@ -118,28 +120,6 @@ export function Dashboard() {
           {formatDate(new Date().toISOString())}
         </span>
       </div>
-      <section className="dashboard-welcome">
-        <div>
-          <span>KELOLA DENGAN LEBIH MUDAH</span>
-          <h2>Setiap aset, sebuah peluang baru.</h2>
-          <p>
-            Perbarui katalog dan tanggapi minat untuk membantu calon peserta
-            <br />
-            menemukan aset yang tepat.
-          </p>
-          <Link href="/aset/baru" className="welcome-button">
-            <Plus size={16} />
-            Tambah Aset Baru
-            <ArrowUpRight size={16} />
-          </Link>
-        </div>
-        <div className="welcome-art">
-          <Building2 size={150} strokeWidth={0.7} />
-          <span>
-            <CheckCircle2 size={27} />
-          </span>
-        </div>
-      </section>
       <div className="dashboard-stats">
         {stats.map((s) => (
           <div className="stat-card" key={s.title}>
@@ -154,6 +134,7 @@ export function Dashboard() {
           </div>
         ))}
       </div>
+      <DashboardAnalytics assets={portfolio}/>
       <div className="dashboard-grid">
         <section className="admin-panel">
           <div className="panel-heading">

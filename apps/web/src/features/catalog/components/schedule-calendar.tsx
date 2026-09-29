@@ -1,5 +1,6 @@
 ﻿"use client";
 import { useEffect, useState } from "react";
+import { ListSkeleton } from "@/components/ui/public-skeleton";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -311,9 +312,7 @@ export function ScheduleCalendar({ period }: { period: string }) {
             </button>
           </div>
         ) : loading ? (
-          <p className="calendar-agenda-empty" role="status">
-            Memuat daftar aset...
-          </p>
+          <ListSkeleton count={2}/>
         ) : selectedAssets.length ? (
           <div className="calendar-agenda-list">
             {selectedAssets.map((asset) => (

@@ -121,7 +121,6 @@ export function AssetGallery({
           </div>
         )}
         <div className="gallery-meta">
-          <small>{asset.image.startsWith("/api/uploads/") ? "Foto aset" : "Foto ilustrasi · Data contoh"}</small>
           <div>
             <span className="asset-method">{asset.category}</span>
             <span title="Dilihat per sesi browser">

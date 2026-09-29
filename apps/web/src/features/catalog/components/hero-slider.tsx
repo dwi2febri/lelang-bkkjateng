@@ -86,7 +86,7 @@ export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } 
         </div>
         <div className="hero-note">
           <strong>{slide.note}</strong>
-          <small>{slide.caption}</small>
+          {slide.caption && !/ilustrasi|demonstrasi/i.test(slide.caption) && <small>{slide.caption}</small>}
         </div>
         <div className="hero-bkk-logo">
           <img

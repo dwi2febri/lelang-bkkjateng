@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/select";
 import { PublicFooter } from "./public-footer";
 import { ScheduleCalendar } from "./schedule-calendar";
 import { ScheduleList } from "./schedule-list";
+import { AssetGridSkeleton, ListSkeleton, Skeleton } from "@/components/ui/public-skeleton";
 import { CatalogSidebar } from "./catalog-sidebar";
 import {
   publicRoutes,
@@ -46,7 +47,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { CatalogAsset as Asset } from "../types";
-import { getCatalog, sendInterest } from "../services/catalog-service";
+import { getCatalog, getInterestStatus, InterestRequestError, sendInterest } from "../services/catalog-service";
 import { saveSubmissionReceipt } from "../submission-history";
 import { accountRequest, saveLatestApplicant } from "../public-account";
 import { usePublicFavorites } from "../public-favorites-provider";
@@ -123,6 +124,25 @@ export default function CatalogPage({
     [historyUnavailable, setHistoryUnavailable] = useState(false),
     [sending, setSending] = useState(false),
     [formError, setFormError] = useState("");
+  const [interestCheck, setInterestCheck] = useState<{ key: string; state: "ready" | "submitted" | "error" } | null>(null);
+  const [interestRetry, setInterestRetry] = useState(0);
+  const interestKey = `${selected?.slug || ""}:${publicUser?.id || 0}`;
+  const interestState = interestCheck?.key === interestKey ? interestCheck.state : undefined;
+  const checkingInterest = !accountChecked || (!!publicUser && !interestState);
+  const alreadyContacted = interestState === "submitted";
+  useEffect(() => {
+    setSubmitted(false);
+    setFormError("");
+    setInterestCheck(null);
+    if (!selected || !accountChecked || !publicUser) return;
+    const controller = new AbortController();
+    getInterestStatus(selected.slug, controller.signal).then(result => {
+      if (!controller.signal.aborted) setInterestCheck({ key: interestKey, state: result.submitted ? "submitted" : "ready" });
+    }).catch(() => {
+      if (!controller.signal.aborted) setInterestCheck({ key: interestKey, state: "error" });
+    });
+    return () => controller.abort();
+  }, [selected?.slug, publicUser?.id, accountChecked, interestKey, interestRetry]);
   const load = useCallback(
     async (signal?: AbortSignal) => {
       requesting.current = true;
@@ -199,6 +219,7 @@ export default function CatalogPage({
   useEffect(() => {
     if (
       detailAsset ||
+      children ||
       guidePage ||
       historyPage ||
       (view === "schedule" && scheduleView === "calendar")
@@ -207,7 +228,7 @@ export default function CatalogPage({
     const controller = new AbortController();
     load(controller.signal);
     return () => controller.abort();
-  }, [load, retry, detailAsset, guidePage, historyPage, view, scheduleView]);
+  }, [load, retry, detailAsset, children, guidePage, historyPage, view, scheduleView]);
   const loadMore = useCallback(() => {
     if (requesting.current || loading || error || !hasMore) return;
     requesting.current = true;
@@ -301,22 +322,26 @@ export default function CatalogPage({
   }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!selected) return;
+    if (!selected || sending || submitted || checkingInterest || alreadyContacted || interestState === "error") return;
     setSending(true);
     setFormError("");
     const data = new FormData(e.currentTarget);
     try {
       await sendInterest(selected.slug, {
-        name: data.get("name"),
-        email: data.get("email"),
-        phone: data.get("phone"),
+        name: publicUser?.name ?? data.get("name"),
+        email: publicUser?.email ?? data.get("email"),
+        phone: publicUser?.phone ?? data.get("phone"),
         message: data.get("message") || "",
         consent: data.get("consent") === "on",
       });
       setHistoryUnavailable(!saveSubmissionReceipt(selected));
-      saveLatestApplicant({ name: String(data.get("name") || ""), email: String(data.get("email") || ""), phone: String(data.get("phone") || "") });
+      saveLatestApplicant(publicUser || { name: String(data.get("name") || ""), email: String(data.get("email") || ""), phone: String(data.get("phone") || "") });
       setSubmitted(true);
-    } catch {
+    } catch (error) {
+      if (error instanceof InterestRequestError && error.status === 409) {
+        setInterestCheck({ key: interestKey, state: "submitted" });
+        return;
+      }
       setFormError(
         "Permintaan belum tersimpan. Periksa isian dan coba kembali.",
       );
@@ -384,26 +409,38 @@ export default function CatalogPage({
               saved={favorites.includes(selected.id)}
               onFavorite={() => favorite(selected.id)}
             >
-              {submitted ? (
+              {checkingInterest ? (
+                <div role="status" aria-label="Memeriksa pengajuan" className="interest-form">
+                  <Skeleton className="ghost-interest-field" /><Skeleton className="ghost-interest-field" />
+                  <Skeleton className="ghost-interest-field" /><Skeleton className="ghost-interest-field" />
+                </div>
+              ) : interestState === "error" ? (
+                <div role="alert">
+                  <p>Riwayat pengajuan belum dapat diperiksa. Silakan coba kembali.</p>
+                  <button type="button" className="outline-button" onClick={() => setInterestRetry(value => value + 1)}>Coba kembali</button>
+                </div>
+              ) : submitted || alreadyContacted ? (
                 <div className="success">
                   <Check />
                   <div>
-                    <strong>Minat Anda berhasil tersimpan</strong>
+                    <strong>{submitted ? "Minat Anda berhasil tersimpan" : "Anda sudah menghubungi pengelola aset ini"}</strong>
                     <p>
-                      Referensi aset: {selected.code}. Ini adalah demonstrasi;
-                      belum ada notifikasi ke petugas.
+                      Pengajuan untuk aset {selected.code} sudah tercatat dan tidak dapat dikirim ulang.
+                      Pantau statusnya melalui History Pengajuan. Chat pengelola aset tersedia setelah pengajuan diproses.
                     </p>
                     {historyUnavailable ? <p>Riwayat tidak dapat disimpan di browser ini.</p> : <Link href="/riwayat-pengajuan">Lihat History Pengajuan →</Link>}
                   </div>
                 </div>
               ) : (
                 <form className="interest-form" onSubmit={submit}>
+                  {publicUser && <p className="interest-account-note">Nama, email, dan WhatsApp menggunakan data akun Anda dan tidak dapat diubah di formulir ini.</p>}
                   <label>
                     Nama lengkap
                     <input
                       name="name"
                       key={`name-${publicUser?.id || 0}`}
                       defaultValue={publicUser?.name || ""}
+                      readOnly={!!publicUser}
                       required
                       minLength={2}
                       maxLength={80}
@@ -416,6 +453,7 @@ export default function CatalogPage({
                       name="email"
                       key={`email-${publicUser?.id || 0}`}
                       defaultValue={publicUser?.email || ""}
+                      readOnly={!!publicUser}
                       type="email"
                       required
                       maxLength={150}
@@ -428,6 +466,7 @@ export default function CatalogPage({
                       name="phone"
                       key={`phone-${publicUser?.id || 0}`}
                       defaultValue={publicUser?.phone || ""}
+                      readOnly={!!publicUser}
                       type="tel"
                       pattern="(\+62|0)[0-9]{8,13}"
                       required
@@ -701,7 +740,7 @@ export default function CatalogPage({
                           ) && (
                             <span aria-live="polite">
                               {loading || (view === "favorites" && !favoritesReady)
-                                ? "Memuat…"
+                                ? <Skeleton className="ghost-counter"/>
                                 : (view === "favorites"
                                     ? visible.length
                                     : total) + " aset tersedia"}
@@ -777,11 +816,7 @@ export default function CatalogPage({
                       </div>
                     ) : (loading || (view === "favorites" && !favoritesReady)) &&
                       !(view === "catalog" && assets.length > 0) ? (
-                      <div className="asset-grid">
-                        {[1, 2, 3, 4].map((x) => (
-                          <div className="skeleton" key={x} />
-                        ))}
-                      </div>
+                      view === "schedule" ? <ListSkeleton/> : <AssetGridSkeleton count={view === "catalog" ? 6 : 4}/>
                     ) : visible.length === 0 ? (
                       <div className="empty">
                         <Search size={35} />
@@ -855,9 +890,6 @@ export default function CatalogPage({
                                   }
                                 />
                               </button>
-                              <span className="photo-label">
-                                Foto ilustrasi
-                              </span>
                               <span className="photo-category">
                                 {a.category}
                               </span>
@@ -908,6 +940,7 @@ export default function CatalogPage({
                         ))}
                       </div>
                     )}
+                    {view === "catalog" && loading && assets.length > 0 && <div className="ghost-more"><AssetGridSkeleton count={3}/></div>}
                     {view === "catalog" && assets.length > 0 && (
                       <div className="catalog-load-more" ref={sentinel}>
                         <p role="status" aria-live="polite">
@@ -967,13 +1000,6 @@ export default function CatalogPage({
                           </button>
                         </div>
                       )}
-                    <div className="demo-note">
-                      <BadgeCheck size={16} />
-                      <span>
-                        Mode demonstrasi · Seluruh aset, harga, dan jadwal
-                        merupakan data contoh.
-                      </span>
-                    </div>
                   </div>
                 </div>
               </section>

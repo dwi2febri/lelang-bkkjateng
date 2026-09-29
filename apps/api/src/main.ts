@@ -14,6 +14,7 @@ import { AuthController } from "./auth/auth.controller";
 import { AuthService } from "./auth/auth.service";
 import { AdminGuard } from "./auth/auth.guard";
 import { AdminController } from "./admin/admin.controller";
+import { UsersController } from "./admin/users.controller";
 import { PublicAccountController } from "./public-account/public-account.controller";
 import { PublicAccountService } from "./public-account/public-account.service";
 import { InterestChatController } from "./interest-chat.controller";
@@ -23,6 +24,7 @@ config({ path: resolve(__dirname, "../../../.env"), quiet: true });
     AssetsController,
     AuthController,
     AdminController,
+    UsersController,
     PublicAccountController,
     InterestChatController,
     GuideController,

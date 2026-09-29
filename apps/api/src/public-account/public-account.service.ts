@@ -3,6 +3,7 @@ import { createHash, randomBytes, randomInt, scrypt, timingSafeEqual } from "nod
 import { promisify } from "node:util";
 import type { Request, Response } from "express";
 import nodemailer from "nodemailer";
+import type { RowDataPacket } from "mysql2/promise";
 import { Database } from "../database/database.service";
 
 const derive = promisify(scrypt);
@@ -77,6 +78,59 @@ export class PublicAccountService {
       transport.close();
     }
   }
+  async issuePasswordReset(userId: number) {
+    const host = process.env.SMTP_HOST;
+    const username = process.env.SMTP_USER;
+    const password = process.env.SMTP_PASSWORD;
+    const sender = process.env.SMTP_FROM;
+    if (!host || !username || !password || !sender) throw new ServiceUnavailableException("Layanan email belum dikonfigurasi.");
+    const token = randomBytes(32).toString("hex");
+    const tokenHash = digest(token);
+    const connection = await this.db.pool.getConnection();
+    let email: string;
+    try {
+      await connection.beginTransaction();
+      const [users] = await connection.execute<RowDataPacket[]>("SELECT email,active FROM public_users WHERE id=? FOR UPDATE", [userId]);
+      if (!users.length) throw new BadRequestException("User eksternal tidak ditemukan.");
+      if (!users[0].active) throw new BadRequestException("Aktifkan akun sebelum mengirim reset kata sandi.");
+      email = users[0].email;
+      const [recent] = await connection.execute<RowDataPacket[]>("SELECT user_id FROM public_password_resets WHERE user_id=? AND sent_at > DATE_SUB(UTC_TIMESTAMP(), INTERVAL 60 SECOND)", [userId]);
+      if (recent.length) throw new HttpException("Tunggu 60 detik sebelum mengirim ulang tautan reset.", 429);
+      await connection.execute("INSERT INTO public_password_resets(user_id,token_hash,expires_at,sent_at) VALUES(?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 30 MINUTE),UTC_TIMESTAMP()) ON DUPLICATE KEY UPDATE token_hash=VALUES(token_hash),expires_at=VALUES(expires_at),sent_at=VALUES(sent_at)", [userId, tokenHash]);
+      await connection.commit();
+    } catch (error) { await connection.rollback(); throw error; }
+    finally { connection.release(); }
+    const origin = (process.env.PUBLIC_BASE_URL || (process.env.APP_ORIGINS || "http://localhost:3000").split(",")[0]).trim().replace(/\/$/, "");
+    const url = `${origin}/atur-ulang-sandi?token=${encodeURIComponent(token)}`;
+    const port = Number(process.env.SMTP_PORT || 465);
+    const transport = nodemailer.createTransport({ host, port, secure: port === 465, requireTLS: port !== 465, auth: { user: username, pass: password }, connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 10_000 });
+    try {
+      const delivered = await transport.sendMail({ from: sender, to: email!, subject: "Atur ulang kata sandi akun BKK Jateng", text: `Administrator BKK Jateng meminta pengaturan ulang kata sandi akun Anda.\n\nBuka tautan berikut untuk membuat kata sandi baru:\n${url}\n\nTautan berlaku 30 menit dan hanya dapat digunakan sekali. Abaikan email ini jika Anda tidak meminta perubahan.`, html: `<p>Administrator BKK Jateng meminta pengaturan ulang kata sandi akun Anda.</p><p><a href="${url}">Buat kata sandi baru</a></p><p>Tautan berlaku 30 menit dan hanya dapat digunakan sekali. Abaikan email ini jika Anda tidak meminta perubahan.</p>` });
+      if (!delivered.accepted.some(address => normalize(address) === email)) throw new Error("SMTP recipient rejected");
+    } catch {
+      await this.db.execute("DELETE FROM public_password_resets WHERE user_id=? AND token_hash=?", [userId, tokenHash]);
+      throw new ServiceUnavailableException("Email reset belum dapat dikirim. Coba lagi nanti.");
+    } finally { transport.close(); }
+    return { message: "Tautan reset kata sandi telah dikirim ke email user." };
+  }
+  async resetPassword(token: string, password: string, confirmation: string, req: Request) {
+    this.checkMutation(req);
+    this.limit(`reset:${req.ip || "local"}`, 15);
+    if (password !== confirmation) throw new BadRequestException("Konfirmasi kata sandi tidak sama.");
+    const connection = await this.db.pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [rows] = await connection.execute<RowDataPacket[]>("SELECT r.user_id FROM public_password_resets r JOIN public_users u ON u.id=r.user_id WHERE r.token_hash=? AND r.expires_at>UTC_TIMESTAMP() AND u.active=1 FOR UPDATE", [digest(token)]);
+      if (!rows.length) throw new BadRequestException("Tautan reset tidak valid atau sudah kedaluwarsa.");
+      const userId = rows[0].user_id;
+      await connection.execute("UPDATE public_users SET password_hash=? WHERE id=?", [await hash(password), userId]);
+      await connection.execute("DELETE FROM public_sessions WHERE user_id=?", [userId]);
+      await connection.execute("DELETE FROM public_password_resets WHERE user_id=?", [userId]);
+      await connection.commit();
+      return { message: "Kata sandi berhasil diubah. Silakan masuk kembali." };
+    } catch (error) { await connection.rollback(); throw error; }
+    finally { connection.release(); }
+  }
   private async verifiedCode(email: string, code: string) {
     const [record] = await this.db.query("SELECT code_hash,attempts FROM public_email_codes WHERE email=? AND expires_at > UTC_TIMESTAMP()", [email]);
     if (!record || record.attempts >= 5) throw new BadRequestException("Kode tidak valid atau kedaluwarsa.");
@@ -126,7 +180,7 @@ export class PublicAccountService {
   async login(emailInput: string, password: string, req: Request, res: Response) {
     this.checkMutation(req);
     this.limit(`login:${req.ip || "local"}`, 10);
-    const [row] = await this.db.query("SELECT id,name,email,phone,password_hash FROM public_users WHERE email=?", [normalize(emailInput)]);
+    const [row] = await this.db.query("SELECT id,name,email,phone,password_hash FROM public_users WHERE email=? AND active=1", [normalize(emailInput)]);
     const fallback = "0".repeat(32) + ":" + "0".repeat(128);
     if (!(await matches(password, row?.password_hash || fallback)) || !row) throw new UnauthorizedException("Email atau kata sandi tidak sesuai.");
     this.attempts.delete(`login:${req.ip || "local"}`);
@@ -135,7 +189,7 @@ export class PublicAccountService {
   async maybeUser(req: Request): Promise<PublicUser | null> {
     const token = tokenFrom(req);
     if (!token) return null;
-    const [user] = await this.db.query("SELECT u.id,u.name,u.email,u.phone FROM public_sessions s JOIN public_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > UTC_TIMESTAMP()", [digest(token)]);
+    const [user] = await this.db.query("SELECT u.id,u.name,u.email,u.phone FROM public_sessions s JOIN public_users u ON u.id=s.user_id WHERE s.token_hash=? AND s.expires_at > UTC_TIMESTAMP() AND u.active=1", [digest(token)]);
     return user ? { id: user.id, name: user.name, email: user.email, phone: user.phone } : null;
   }
   async user(req: Request) {
@@ -155,13 +209,15 @@ export class PublicAccountService {
     const rows = await this.db.query("SELECT i.id,a.slug,a.code assetCode,a.title assetTitle,i.created_at sentAt,i.status FROM interests i JOIN assets a ON a.id=i.asset_id WHERE i.public_user_id=? ORDER BY i.created_at DESC,i.id DESC LIMIT 200", [user.id]);
     if (!rows.length) return rows;
     const changes = await this.db.query("SELECT h.id,h.interest_id interestId,h.status,h.created_at changedAt FROM interest_history h JOIN interests i ON i.id=h.interest_id WHERE i.public_user_id=? ORDER BY h.id ASC LIMIT 5000", [user.id]);
+    const unread = await this.db.query("SELECT m.interest_id interestId,COUNT(*) unreadCount FROM interest_messages m JOIN interests i ON i.id=m.interest_id LEFT JOIN interest_chat_reads r ON r.interest_id=i.id AND r.public_user_id=i.public_user_id WHERE i.public_user_id=? AND m.sender_role='admin' AND m.id>COALESCE(r.last_read_message_id,0) GROUP BY m.interest_id", [user.id]);
+    const unreadByInterest = new Map(unread.map(row => [row.interestId as number, Number(row.unreadCount)]));
     const byInterest = new Map<number, typeof changes>();
     for (const change of changes) {
       const list = byInterest.get(change.interestId) || [];
       list.push(change);
       byInterest.set(change.interestId, list);
     }
-    return rows.map(row => ({ ...row, statusHistory: byInterest.get(row.id) || [] }));
+    return rows.map(row => ({ ...row, statusHistory: byInterest.get(row.id) || [], unreadCount: unreadByInterest.get(row.id) || 0 }));
   }
   async favorites(req: Request) {
     const user = await this.user(req);

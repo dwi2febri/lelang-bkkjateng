@@ -1,5 +1,5 @@
 export type PublicUser = { id: number; name: string; email: string; phone: string };
-export type AccountHistory = { id: number; slug: string; assetCode: string; assetTitle: string; sentAt: string; status: "baru" | "diproses" | "selesai" | "ditolak"; statusHistory: { id: number; status: "baru" | "diproses" | "selesai" | "ditolak"; changedAt: string }[] };
+export type AccountHistory = { id: number; slug: string; assetCode: string; assetTitle: string; sentAt: string; status: "baru" | "diproses" | "selesai" | "ditolak"; statusHistory: { id: number; status: "baru" | "diproses" | "selesai" | "ditolak"; changedAt: string }[]; unreadCount: number };
 export type LatestApplicant = { name: string; email: string; phone: string };
 const LAST_APPLICANT = "bkk-last-applicant-v1";
 
@@ -25,9 +25,10 @@ export async function accountRequest<T>(path: string, input?: object): Promise<T
     const message = Array.isArray(error.message)
       ? "Isian belum sesuai. Periksa kembali data pada formulir."
       : typeof error.message === "string" ? error.message : "";
-    throw new AccountRequestError(message || (response.status >= 500
-      ? "Layanan email sedang tidak tersedia. Coba kembali beberapa saat lagi."
-      : "Periksa alamat email dan coba kembali."), response.status);
+    const safeMessage = /(?:Cannot\s+(?:GET|POST|PATCH|PUT|DELETE)|\/api\/|<html)/i.test(message) ? "" : message;
+    throw new AccountRequestError(safeMessage || (response.status >= 500
+      ? "Layanan sedang tidak tersedia. Coba kembali beberapa saat lagi."
+      : "Permintaan belum berhasil. Coba kembali."), response.status);
   }
   return response.json();
 }

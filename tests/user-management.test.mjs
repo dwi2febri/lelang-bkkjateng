@@ -1,0 +1,110 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createHash, randomBytes, scryptSync } from "node:crypto";
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
+import { createRequire } from "node:module";
+dotenv.config({ quiet: true });
+const require = createRequire(import.meta.url);
+const base = "http://127.0.0.1:3000/api";
+const password = "Test-account-987654";
+const request = (path, cookie, method = "GET", body, role = "BKKAdmin") => fetch(base + path, { method, headers: { "Content-Type": "application/json", "x-requested-with": role, Origin: "http://localhost:3000", ...(cookie ? { Cookie: cookie } : {}) }, ...(body ? { body: JSON.stringify(body) } : {}) });
+const sessionCookie = response => response.headers.get("set-cookie")?.split(";")[0];
+
+test("manajemen user memisahkan internal/eksternal dan mencabut akses akun nonaktif", async () => {
+  const db = await mysql.createConnection({ host: process.env.DB_HOST || "127.0.0.1", port: Number(process.env.DB_PORT || 3306), user: process.env.DB_USER || "root", password: process.env.DB_PASSWORD || "", database: process.env.DB_NAME || "lelang_bkkjateng" });
+  const prefix = `users-test-${randomBytes(6).toString("hex")}`;
+  const email = `${prefix}@example.invalid`;
+  const salt = randomBytes(16).toString("hex");
+  const hash = `${salt}:${scryptSync(password, salt, 64).toString("hex")}`;
+  try {
+    const [operator] = await db.execute("INSERT INTO admin_users(name,email,password_hash) VALUES(?,?,?)", ["Test Operator", `${prefix}-operator@example.invalid`, hash]);
+    const [external] = await db.execute("INSERT INTO public_users(name,email,phone,password_hash) VALUES(?,?,?,?)", ["Test External", email, "081234567890", hash]);
+    const token = randomBytes(32).toString("hex");
+    await db.execute("INSERT INTO admin_sessions(token_hash,user_id,expires_at) VALUES(?,?,DATE_ADD(UTC_TIMESTAMP(),INTERVAL 1 HOUR))", [createHash("sha256").update(token).digest("hex"), operator.insertId]);
+    const cookie = `bkk_admin_session=${token}`;
+    const page = await fetch("http://127.0.0.1:3000/manajemen-user", { headers: { Cookie: cookie } });
+    assert.equal(page.status, 200);
+    const html = await page.text();
+    assert.ok(html.includes("Manajemen User Internal") && html.includes("Manajemen User Eksternal"));
+    const externalLogin = await request("/public-account/login", null, "POST", { email, password }, "BKKPublic");
+    assert.equal(externalLogin.status, 200);
+    const externalCookie = sessionCookie(externalLogin);
+    assert.equal((await request("/admin/users", null)).status, 401);
+    assert.equal((await request("/admin/users", externalCookie)).status, 401);
+    assert.equal((await request("/public-account/me", cookie)).status, 401);
+    assert.equal((await request("/auth/login", null, "POST", { email, password })).status, 401, "akun eksternal tidak bisa masuk dashboard");
+    assert.equal((await request("/admin/users/internal", cookie, "POST", { name: "Test Missing", email })).status, 400);
+    assert.equal((await request("/admin/users/internal", cookie, "POST", { name: "Test Internal", email, password }, "BKKPublic")).status, 403);
+    const created = await request("/admin/users/internal", cookie, "POST", { name: "Test Internal", email, password });
+    assert.equal(created.status, 201);
+    const internal = await created.json();
+    assert.equal((await request("/admin/users/internal", cookie, "POST", { name: "Test Duplicate", email, password })).status, 409);
+    for (const type of ["internal", "external"]) {
+      const response = await request(`/admin/users?type=${type}&q=${prefix}`, cookie);
+      assert.equal(response.status, 200);
+      const list = await response.json();
+      assert.equal(list.total, type === "internal" ? 2 : 1);
+      assert.ok(list.data.every(user => !("password_hash" in user)));
+      assert.equal(list.data.find(user => user.email === email).id, type === "internal" ? internal.id : external.insertId);
+    }
+    assert.equal((await request(`/admin/users/internal/${operator.insertId}/active`, cookie, "PATCH", { active: false })).status, 400);
+    let internalLogin = await request("/auth/login", null, "POST", { email, password });
+    assert.equal(internalLogin.status, 200);
+    const internalCookie = sessionCookie(internalLogin);
+    assert.equal((await request(`/admin/users/internal/${internal.id}/active`, cookie, "PATCH", { active: false })).status, 200);
+    assert.equal((await request("/auth/me", internalCookie)).status, 401);
+    assert.equal((await request("/auth/login", null, "POST", { email, password })).status, 401);
+    assert.equal((await request("/public-account/me", externalCookie)).status, 200, "akun eksternal tidak ikut nonaktif meski email sama");
+    assert.equal((await request(`/admin/users/internal/${internal.id}/active`, cookie, "PATCH", { active: true })).status, 200);
+    internalLogin = await request("/auth/login", null, "POST", { email, password });
+    assert.equal(internalLogin.status, 200);
+    assert.equal((await request(`/admin/users/internal/${internal.id}`, cookie, "PATCH", { name: "Updated Internal", email, password: password + "new" })).status, 200);
+    assert.equal((await request("/auth/me", sessionCookie(internalLogin))).status, 401);
+    assert.equal((await request("/auth/login", null, "POST", { email, password: password + "new" })).status, 200);
+    assert.equal((await request(`/admin/users/external/${external.insertId}`, cookie, "PATCH", { name: "Updated External", phone: "089876543210" })).status, 404);
+    assert.equal((await request(`/admin/users/external/${external.insertId}/reset-password`, null, "POST")).status, 401);
+    assert.equal((await request(`/admin/users/external/${external.insertId}/reset-password`, externalCookie, "POST")).status, 401);
+    assert.equal((await request(`/admin/users/external/${external.insertId}/active`, cookie, "PATCH", { active: false })).status, 200);
+    assert.equal((await request("/public-account/me", externalCookie)).status, 401);
+    assert.equal((await request("/public-account/login", null, "POST", { email, password }, "BKKPublic")).status, 401);
+    assert.equal((await request(`/admin/users/external/${external.insertId}/active`, cookie, "PATCH", { active: true })).status, 200);
+    assert.equal((await request("/public-account/login", null, "POST", { email, password }, "BKKPublic")).status, 200);
+    const { Database } = require("../apps/api/dist/database/database.service.js");
+    const { PublicAccountService } = require("../apps/api/dist/public-account/public-account.service.js");
+    const nodemailer = require("nodemailer");
+    const originalTransport = nodemailer.createTransport;
+    const mail = [];
+    const runtimeDb = new Database();
+    try {
+      nodemailer.createTransport = () => ({ sendMail: async content => { mail.push(content); return { accepted: [content.to] }; }, close() {} });
+      const service = new PublicAccountService(runtimeDb);
+      await service.issuePasswordReset(external.insertId);
+      assert.equal(mail.length, 1);
+      assert.equal(mail[0].to, email);
+      const resetToken = mail[0].text.match(/token=([a-f0-9]{64})/)?.[1];
+      assert.ok(resetToken);
+      const [[stored]] = await db.execute("SELECT token_hash FROM public_password_resets WHERE user_id=?", [external.insertId]);
+      assert.equal(stored.token_hash, createHash("sha256").update(resetToken).digest("hex"));
+      await assert.rejects(() => service.issuePasswordReset(external.insertId), error => error.getStatus?.() === 429);
+      assert.equal((await request("/public-account/reset-password", null, "POST", { token: resetToken, password, confirmation: password }, "BKKAdmin")).status, 403);
+      assert.equal((await request("/public-account/reset-password", null, "POST", { token: resetToken, password: password + "new", confirmation: "different" }, "BKKPublic")).status, 400);
+      assert.equal((await request("/public-account/reset-password", null, "POST", { token: resetToken, password: password + "new", confirmation: password + "new" }, "BKKPublic")).status, 200);
+      assert.equal((await request("/public-account/reset-password", null, "POST", { token: resetToken, password: password + "other", confirmation: password + "other" }, "BKKPublic")).status, 400);
+      assert.equal((await request("/public-account/me", externalCookie)).status, 401);
+      assert.equal((await request("/public-account/login", null, "POST", { email, password }, "BKKPublic")).status, 401);
+      assert.equal((await request("/public-account/login", null, "POST", { email, password: password + "new" }, "BKKPublic")).status, 200);
+      await service.issuePasswordReset(external.insertId);
+      const expiredToken = mail.at(-1).text.match(/token=([a-f0-9]{64})/)?.[1];
+      await db.execute("UPDATE public_password_resets SET expires_at=DATE_SUB(UTC_TIMESTAMP(),INTERVAL 1 SECOND) WHERE user_id=?", [external.insertId]);
+      assert.equal((await request("/public-account/reset-password", null, "POST", { token: expiredToken, password: password + "expired", confirmation: password + "expired" }, "BKKPublic")).status, 400);
+    } finally {
+      nodemailer.createTransport = originalTransport;
+      await runtimeDb.onModuleDestroy();
+    }
+  } finally {
+    await db.execute("DELETE FROM admin_users WHERE email LIKE ?", [`${prefix}%`]);
+    await db.execute("DELETE FROM public_users WHERE email LIKE ?", [`${prefix}%`]);
+    await db.end();
+  }
+});

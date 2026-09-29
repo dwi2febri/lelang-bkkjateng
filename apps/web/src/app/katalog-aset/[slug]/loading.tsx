@@ -1,7 +1,5 @@
+import CatalogPage from "@/features/catalog/components/catalog-page";
+import { AssetDetailSkeleton } from "@/components/ui/public-skeleton";
 export default function Loading() {
-  return (
-    <div className="container asset-detail-page" role="status">
-      Memuat detail aset...
-    </div>
-  );
+  return <CatalogPage view="catalog"><AssetDetailSkeleton/></CatalogPage>;
 }

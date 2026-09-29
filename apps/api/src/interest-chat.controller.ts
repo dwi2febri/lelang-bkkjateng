@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Get, HttpCode, NotFoundException, Param, ParseIntPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
-import { IsString, Length } from "class-validator";
+import { IsInt, IsString, Length, Max, Min } from "class-validator";
 import type { Request } from "express";
 import { AdminGuard } from "./auth/auth.guard";
 import type { AuthRequest } from "./auth/auth.service";
@@ -7,6 +7,7 @@ import { Database } from "./database/database.service";
 import { PublicAccountService } from "./public-account/public-account.service";
 
 class MessageDto { @IsString() @Length(1, 2000) body!: string; }
+class ReadDto { @IsInt() @Min(1) @Max(Number.MAX_SAFE_INTEGER) through!: number; }
 
 @Controller("api")
 export class InterestChatController {
@@ -82,5 +83,16 @@ export class InterestChatController {
     this.account.checkMutation(req);
     const user = await this.account.user(req);
     return this.send(id, input.body, "public", user.id, user.id);
+  }
+
+  @Post("public-account/history/:id/messages/read") @HttpCode(200)
+  async publicRead(@Param("id", ParseIntPipe) id: number, @Body() input: ReadDto, @Req() req: Request) {
+    this.account.checkMutation(req);
+    const user = await this.account.user(req);
+    await this.interest(id, user.id);
+    const [latest] = await this.db.query("SELECT MAX(id) messageId FROM interest_messages WHERE interest_id=? AND sender_role='admin' AND id<=?", [id, input.through]);
+    const through = Number(latest?.messageId || 0);
+    if (through) await this.db.execute("INSERT INTO interest_chat_reads(interest_id,public_user_id,last_read_message_id) VALUES(?,?,?) ON DUPLICATE KEY UPDATE last_read_message_id=GREATEST(last_read_message_id,VALUES(last_read_message_id))", [id, user.id, through]);
+    return { readThrough: through };
   }
 }

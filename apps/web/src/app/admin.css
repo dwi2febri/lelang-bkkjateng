@@ -2810,6 +2810,23 @@
 .admin-app .asset-editor-grid .admin-helper { margin: -5px 0 18px; line-height: 1.6; }
 .admin-app .asset-editor-grid .asset-form-primary-panel,
 .admin-app .asset-editor-grid .asset-editor-section { overflow: visible; }
+/* Keep open selectors above adjacent photo sections without covering the header. */
+.admin-app .asset-editor-grid .admin-panel:has(.filter-select-trigger.is-open) {
+  position: relative;
+  z-index: 10;
+}
+.admin-app .asset-editor-grid .asset-catalog-settings {
+  display: grid;
+  gap: 24px;
+}
+.admin-app .asset-editor-grid .asset-catalog-settings h2 { margin: 0; }
+.admin-app .asset-editor-grid .asset-catalog-field {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.admin-app .asset-editor-grid .asset-catalog-field .admin-helper { margin: 0; }
+.admin-app .asset-editor-grid .asset-catalog-field .admin-checkbox { margin: 0; }
 .asset-facility-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .asset-facility-picker label {
   display: flex;

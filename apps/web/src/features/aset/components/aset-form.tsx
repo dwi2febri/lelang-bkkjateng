@@ -506,11 +506,14 @@ export function AsetForm({ id }: { id?: string }) {
               </div>}
               <p className="admin-helper asset-photo-count"><Images size={15} /> {photos.length} dari 12 foto ditambahkan</p>
             </section>
-            <section className="admin-panel padded">
+            <section className="admin-panel padded asset-editor-section asset-catalog-settings">
               <h2>Pengaturan katalog</h2>
+              <div className="asset-catalog-field">
               <Select label="Produk kredit untuk aset" name="creditProductId" value={creditProductId} onChange={setCreditProductId} disabled={creditLoading||!!creditError} options={[{value:"",label:creditLoading?"Memuat produk kredit...":"Tanpa produk kredit"},...creditProducts.filter(product=>product.active||String(product.id)===creditProductId).map(product=>({value:String(product.id),label:product.name+(product.active?"":" (nonaktif)")}))]}/>
               {creditError&&<p role="alert">{creditError} <button type="button" onClick={()=>setCreditRetry(value=>value+1)}>Coba lagi</button></p>}
               <p className="admin-helper">Produk yang dipilih menentukan bunga, metode simulasi, dan tombol Ajukan pada halaman aset. <Link href="/master-produk-kredit">Kelola produk kredit</Link></p>
+              </div>
+              <div className="asset-catalog-field">
               <label className="admin-checkbox">
                 <input
                   type="checkbox"
@@ -524,6 +527,7 @@ export function AsetForm({ id }: { id?: string }) {
                   ? "Aset ini diarsipkan. Pulihkan dari daftar aset untuk menampilkannya kembali."
                   : "Informasi yang disimpan langsung muncul pada katalog publik."}
               </p>
+              </div>
             </section>
           </div>
         </div>

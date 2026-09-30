@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import { asetService } from "../services/aset-service";
 import type { Asset, AssetInput } from "../types";
-import { errorMessage } from "@/services/api";
+import type { CreditProduct } from "@/features/credit-products/calculator";
+import { api, errorMessage } from "@/services/api";
 import { formatPriceInput, priceDigits } from "@/lib/price";
 import { notify } from "@/store/notification-store";
 import {CatalogIcon} from "@/components/ui/catalog-icon";
@@ -38,6 +39,10 @@ function localDate(iso?: string | null) {
   return new Date(time.getTime() + 7 * 3600000).toISOString().slice(0, 16);
 }
 export function AsetForm({ id }: { id?: string }) {
+  const [creditProducts,setCreditProducts]=useState<CreditProduct[]>([]);
+  const [creditProductId,setCreditProductId]=useState("");
+  const [creditLoading,setCreditLoading]=useState(true),[creditError,setCreditError]=useState(""),[creditRetry,setCreditRetry]=useState(0);
+  useEffect(()=>{const controller=new AbortController();setCreditLoading(true);setCreditError("");api.get<CreditProduct[]>("/admin/credit-products",{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted)setCreditProducts(data);}).catch(err=>{if(!controller.signal.aborted)setCreditError(errorMessage(err));}).finally(()=>{if(!controller.signal.aborted)setCreditLoading(false);});return()=>controller.abort();},[creditRetry]);
   const formRef = useRef<HTMLFormElement>(null);
   const [tab, setTab] = useState<"input" | "preview">("input");
   const [preview, setPreview] = useState<CatalogAsset | null>(null);
@@ -89,6 +94,7 @@ export function AsetForm({ id }: { id?: string }) {
       .detail(id, controller.signal)
       .then((data) => {
         setAsset(data);
+        setCreditProductId(data.creditProductId?String(data.creditProductId):"");
         setSpecValues({...Object.fromEntries(legacySpecKeys.map(key=>[key,(specValue(data,key) as string|number)??""])),...data.details?.attributes});
         setBasePrice(String(data.oldPrice || data.price));
         setDiscount(String(data.oldPrice ? Math.max(0, data.oldPrice - data.price) : 0));
@@ -162,6 +168,7 @@ export function AsetForm({ id }: { id?: string }) {
     const text = (key: string) => String(form.get(key) || "").trim();
     const optionalNumber = (key: string) => legacySpecKeys.includes(key) ? specValues[key]!==undefined && specValues[key]!=="" ? Number(specValues[key]) : undefined : text(key) ? Number(form.get(key)) : undefined;
     const input: AssetInput = {
+      creditProductId: creditProductId ? Number(creditProductId) : null,
       slug,
       code: text("code"),
       title: text("title"),
@@ -206,7 +213,7 @@ export function AsetForm({ id }: { id?: string }) {
   }
   function showPreview() {
     const input = readInput();
-    setPreview({ ...input, id: asset?.id || 0, province: province || "", saleMethod: saleMethod as CatalogAsset["saleMethod"], title: input.title || "Nama aset", code: code || "Kode aset", image: photos[0] || "/asset-placeholder.svg", description: input.description || "Deskripsi aset belum diisi." });
+    setPreview({ ...input, creditProduct:creditProducts.find(product=>product.id===Number(creditProductId))||null, id: asset?.id || 0, province: province || "", saleMethod: saleMethod as CatalogAsset["saleMethod"], title: input.title || "Nama aset", code: code || "Kode aset", image: photos[0] || "/asset-placeholder.svg", description: input.description || "Deskripsi aset belum diisi." });
     setTab("preview");
   }
   async function submit(e: React.FormEvent<HTMLFormElement>) {
@@ -501,6 +508,9 @@ export function AsetForm({ id }: { id?: string }) {
             </section>
             <section className="admin-panel padded">
               <h2>Pengaturan katalog</h2>
+              <Select label="Produk kredit untuk aset" name="creditProductId" value={creditProductId} onChange={setCreditProductId} disabled={creditLoading||!!creditError} options={[{value:"",label:creditLoading?"Memuat produk kredit...":"Tanpa produk kredit"},...creditProducts.filter(product=>product.active||String(product.id)===creditProductId).map(product=>({value:String(product.id),label:product.name+(product.active?"":" (nonaktif)")}))]}/>
+              {creditError&&<p role="alert">{creditError} <button type="button" onClick={()=>setCreditRetry(value=>value+1)}>Coba lagi</button></p>}
+              <p className="admin-helper">Produk yang dipilih menentukan bunga, metode simulasi, dan tombol Ajukan pada halaman aset. <Link href="/master-produk-kredit">Kelola produk kredit</Link></p>
               <label className="admin-checkbox">
                 <input
                   type="checkbox"

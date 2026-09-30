@@ -93,7 +93,7 @@ export default function CatalogPage({
   const requesting = useRef(false);
   const [retry, setRetry] = useState(0);
   const [hasMore, setHasMore] = useState(false);
-  const { minPrice, saleMethod, tag, dateFrom, dateTo } = initialFilters;
+  const { minPrice, saleMethod, tag, dateFrom, dateTo, province, district } = initialFilters;
   const [total, setTotal] = useState(0),
     [page, setPage] = useState(1),
     [period, setPeriod] = useState("upcoming");
@@ -164,6 +164,8 @@ export default function CatalogPage({
         if (price && view !== "home") params.set("maxPrice", price);
         if (view === "catalog")
           for (const [key, value] of Object.entries({
+            province,
+            district,
             minPrice,
             saleMethod,
             tag,
@@ -202,6 +204,8 @@ export default function CatalogPage({
     [
       category,
       city,
+      province,
+      district,
       term,
       sort,
       price,
@@ -383,7 +387,7 @@ export default function CatalogPage({
             <Link href="/riwayat-pengajuan" className={historyPage ? "active" : ""} aria-current={historyPage ? "page" : undefined} onClick={() => setMenu(false)}>History Pengajuan</Link>
           </nav>
           {accountChecked && !publicUser && <Link href="/masuk" className="public-login-link"><span>Sudah punya akun?</span> <strong>Masuk</strong></Link>}
-          {accountChecked && publicUser && <button type="button" className="public-logout-button" onClick={logoutPublic}><LogOut size={16}/> Keluar</button>}
+          {accountChecked && publicUser && <button type="button" className="public-logout-button" aria-label="Keluar" title="Keluar" onClick={logoutPublic}><LogOut size={16}/><span>Keluar</span></button>}
           <button
             className="favorite-nav"
             onClick={() => navigate("favorites")}
@@ -652,6 +656,8 @@ export default function CatalogPage({
                         q: term,
                         category,
                         city,
+                        province,
+                        district,
                         maxPrice: price,
                         minPrice,
                         saleMethod,

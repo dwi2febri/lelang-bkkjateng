@@ -1,4 +1,6 @@
+import { CreditProductsController } from "./credit-products.controller";
 import { CategoriesController } from "./categories.controller";
+import { PresenceController, PresenceService } from "./presence";
 import { AssetUploadsController, PublicAssetUploadsController } from "./asset-uploads.controller";
 import { BannersController } from "./banners.controller";
 import { VisitorsController } from "./visitors.controller";
@@ -21,6 +23,8 @@ import { InterestChatController } from "./interest-chat.controller";
 config({ path: resolve(__dirname, "../../../.env"), quiet: true });
 @Module({
   controllers: [
+    CreditProductsController,
+    PresenceController,
     AssetsController,
     AuthController,
     AdminController,
@@ -34,11 +38,12 @@ config({ path: resolve(__dirname, "../../../.env"), quiet: true });
     AssetUploadsController,
     PublicAssetUploadsController,
   ],
-  providers: [Database, AuthService, AdminGuard, PublicAccountService],
+  providers: [Database, AuthService, AdminGuard, PublicAccountService, PresenceService],
 })
 class AppModule {}
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.getHttpAdapter().getInstance().set("trust proxy", "loopback");
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

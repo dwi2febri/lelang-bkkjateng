@@ -12,6 +12,8 @@ export default async function Page({
     "category",
     "q",
     "city",
+    "province",
+    "district",
     "maxPrice",
     "minPrice",
     "saleMethod",

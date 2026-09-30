@@ -38,6 +38,7 @@ export class AssetDetailsDto {
   @IsOptional() @IsArray() @ArrayMaxSize(50) @IsString({ each: true }) @Length(1,80,{each:true}) facilities?: string[];
 }
 export class AssetDto {
+  @IsOptional() @IsInt() @Min(1) creditProductId?: number | null;
   @IsString()
   @Length(3, 150)
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)

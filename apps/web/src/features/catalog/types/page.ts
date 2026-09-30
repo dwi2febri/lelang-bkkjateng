@@ -3,6 +3,8 @@ export type CatalogFilters = {
   category?: string;
   q?: string;
   city?: string;
+  province?: string;
+  district?: string;
   maxPrice?: string;
   minPrice?: string;
   saleMethod?: string;
@@ -26,6 +28,8 @@ export function catalogHref(filters: CatalogFilters = {}) {
     params.set("city", filters.city);
   if (filters.maxPrice) params.set("maxPrice", filters.maxPrice);
   for (const key of [
+    "province",
+    "district",
     "minPrice",
     "saleMethod",
     "tag",

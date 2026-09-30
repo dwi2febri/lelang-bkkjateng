@@ -1,4 +1,6 @@
+import { creditProduct } from "./credit-products.controller";
 import { Database } from "./database/database.service";
+import { PresenceService } from "./presence";
 import {getCategorySettings} from "./category-settings";
 import {
   Body,
@@ -12,6 +14,7 @@ import {
   BadRequestException,
   ConflictException,
   Header,
+  Res,
 } from "@nestjs/common";
 import {
   IsEmail,
@@ -28,7 +31,7 @@ import {
   IsUUID,
 } from "class-validator";
 import { Req } from "@nestjs/common";
-import type { Request } from "express";
+import type { Request, Response } from "express";
 import { PublicAccountService } from "./public-account/public-account.service";
 import { Type } from "class-transformer";
 import type { RowDataPacket } from "mysql2/promise";
@@ -39,6 +42,8 @@ class SearchDto {
   @IsString() @Length(1,30)
   category?: string;
   @IsOptional() @IsString() @Length(0, 60) city?: string;
+  @IsOptional() @IsString() @Length(0, 60) province?: string;
+  @IsOptional() @IsString() @Length(0, 100) district?: string;
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -91,7 +96,7 @@ class ViewDto {
 }
 @Controller("api")
 export class AssetsController {
-  constructor(private readonly db: Database, private readonly account: PublicAccountService) {}
+  constructor(private readonly db: Database, private readonly account: PublicAccountService, private readonly presence: PresenceService) {}
   @Get("health") async health() {
     await this.db.query("SELECT 1");
     return { status: "ok", database: "mysql" };
@@ -147,6 +152,14 @@ export class AssetsController {
       where.push("city = ?");
       values.push(query.city);
     }
+    if (query.province) {
+      where.push("province = ?");
+      values.push(query.province);
+    }
+    if (query.district) {
+      where.push("district = ?");
+      values.push(query.district);
+    }
     if (query.maxPrice !== undefined) {
       where.push("price <= ?");
       values.push(query.maxPrice);
@@ -173,6 +186,12 @@ export class AssetsController {
       pageSize: query.pageSize,
     };
   }
+  @Get("asset-locations") async locations() {
+    const data = await this.db.query(
+      "SELECT DISTINCT province, city, district FROM assets WHERE archived = 0 ORDER BY province, city, district",
+    );
+    return { data };
+  }
   @Get("assets/:slug") async detail(@Param("slug") slug: string) {
     const rows = await this.db.query(
       "SELECT * FROM assets WHERE slug = ? AND archived = 0",
@@ -187,9 +206,11 @@ export class AssetsController {
       "SELECT (SELECT COUNT(*) FROM asset_views WHERE asset_id = ?) viewCount, (SELECT COUNT(*) FROM interests WHERE asset_id = ?) interestCount",
       [rows[0].id, rows[0].id],
     );
+    const [product] = rows[0].creditProductId ? await this.db.query("SELECT * FROM credit_products WHERE id=?",[rows[0].creditProductId]) : [];
     const [category] = await this.db.query("SELECT settings FROM asset_categories WHERE name=?",[rows[0].category]);
     return {
       ...rows[0],
+      creditProduct: product ? creditProduct(product) : null,
       categorySettings: getCategorySettings(rows[0].category,typeof category?.settings==="string"?JSON.parse(category.settings):category?.settings),
       details: typeof rows[0].details === "string" ? JSON.parse(rows[0].details) : rows[0].details || {},
       id: rows[0].id as number,
@@ -233,6 +254,7 @@ export class AssetsController {
     @Param("slug") slug: string,
     @Body() body: InterestDto,
     @Req() req: Request,
+    @Res({passthrough:true}) res: Response,
   ) {
     const asset = await this.detail(slug);
     const user = await this.account.maybeUser(req);
@@ -259,6 +281,7 @@ export class AssetsController {
     } finally {
       connection.release();
     }
+    await this.presence.applicant(req,res,applicant.name,`/katalog-aset/${slug}`).catch(() => undefined);
     return { message: "Minat Anda berhasil tersimpan.", reference: asset.code };
   }
 }

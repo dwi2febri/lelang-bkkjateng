@@ -1,4 +1,5 @@
 "use client";
+import { CreditSimulation } from "@/features/credit-products/credit-simulation";
 import { AssetGallery } from "./asset-gallery";
 import { AssetLocationMap } from "./asset-location-map";
 import { AssetBrochure } from "./asset-brochure";
@@ -41,7 +42,6 @@ import { getCatalog } from "../services/catalog-service";
 import {useCategories,categoryIcons} from "@/features/categories/categories";
 import {CatalogIcon} from "@/components/ui/catalog-icon";
 import {getCategorySettings, specValue, formatSpec, specificationIcon, facilityIcon, type CategorySettings} from "@/features/categories/settings";
-import { PriceInput } from "@/components/ui/price-input";
 import {isGoogleMapsUrl,googleMapsSearchUrl,isMapPoint,pointGoogleMapsUrl} from "@/features/aset/google-maps";
 
 const money = (value: number) =>
@@ -332,8 +332,8 @@ export function AssetDetail({
               kepada petugas.
             </div>
           </section>)}
-          {config.sections.calculator && (
-            <MortgageCalculator price={asset.price} />
+          {(config.sections.calculator || asset.creditProduct) && (
+            asset.creditProduct ? <CreditSimulation key={asset.creditProduct.id} price={asset.price} product={asset.creditProduct}/> : <MortgageCalculator price={asset.price} />
           )}
           <section className="asset-detail-panel" id="minat">
             <h2>Hubungi pengelola aset</h2>
@@ -371,9 +371,9 @@ export function AssetDetail({
               {summaryFields.length>0 && <dl className="asset-summary-area">
                 {summaryFields.map(field=><div key={field.key}><dt><CatalogIcon name={specificationIcon(field.key,field.icon)} size={18}/>{field.label}</dt><dd>{formatSpec(specValue(asset,field.key),field.unit)}</dd></div>)}
               </dl>}
-              {config.sections.financing && (
+              {(config.sections.financing || asset.creditProduct) && (
                 <a href="#minat" className="primary-button asset-kpr-button">
-                  {config.financingLabel}
+                  {asset.creditProduct ? `Ajukan ${asset.creditProduct.name}` : config.financingLabel}
                 </a>
               )}
               <a href="#minat" className="outline-button asset-contact-button">
@@ -433,16 +433,14 @@ export function AssetDetail({
 }
 
 function MortgageCalculator({ price }: { price: number }) {
-  const [deposit, setDeposit] = useState(String(Math.round(price * 0.2)));
   const [rate, setRate] = useState("");
   const [years, setYears] = useState("10");
-  const principal = price - Number(deposit);
+  const principal = price;
   const monthlyRate = Number(rate) / 1200;
   const months = Number(years) * 12;
   const valid =
-    deposit !== "" &&
     principal > 0 &&
-    principal <= price &&
+    Number.isFinite(principal) &&
     rate !== "" &&
     Number(rate) >= 0 &&
     Number(rate) <= 100 &&
@@ -465,13 +463,6 @@ function MortgageCalculator({ price }: { price: number }) {
           Harga aset
           <input value={money(price)} readOnly />
         </label>
-        <PriceInput
-          label="Uang muka"
-          name="deposit"
-          value={deposit}
-          onChange={setDeposit}
-          placeholder="Uang muka"
-        />
         <label>
           Bunga per tahun (%)
           <input
@@ -505,7 +496,7 @@ function MortgageCalculator({ price }: { price: number }) {
           </>
         ) : (
           <span>
-            Isi uang muka di bawah harga aset, bunga 0–100%, dan tenor 1–30
+            Isi bunga 0–100%, dan tenor 1–30
             tahun.
           </span>
         )}

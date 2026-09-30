@@ -1,0 +1,121 @@
+[
+  {
+    "code": "mikro",
+    "name": "BKK Mikro",
+    "requiresEmployee": false,
+    "rules": [
+      {
+        "audience": "all",
+        "minMonths": 1,
+        "maxMonths": 36,
+        "flatRate": 9,
+        "annuityRate": 15
+      },
+      {
+        "audience": "all",
+        "minMonths": 37,
+        "maxMonths": null,
+        "flatRate": 11,
+        "annuityRate": 18
+      }
+    ]
+  },
+  {
+    "code": "agrari",
+    "name": "BKK Agrari",
+    "requiresEmployee": false,
+    "rules": [
+      {
+        "audience": "all",
+        "minMonths": 1,
+        "maxMonths": 36,
+        "flatRate": 9,
+        "annuityRate": 15
+      },
+      {
+        "audience": "all",
+        "minMonths": 37,
+        "maxMonths": null,
+        "flatRate": 11,
+        "annuityRate": 18
+      }
+    ]
+  },
+  {
+    "code": "joglo",
+    "name": "BKK Joglo",
+    "requiresEmployee": false,
+    "rules": [
+      {
+        "audience": "all",
+        "minMonths": 1,
+        "maxMonths": 36,
+        "flatRate": 10.5,
+        "annuityRate": 17
+      },
+      {
+        "audience": "all",
+        "minMonths": 37,
+        "maxMonths": 60,
+        "flatRate": 12,
+        "annuityRate": 20
+      },
+      {
+        "audience": "all",
+        "minMonths": 61,
+        "maxMonths": null,
+        "flatRate": null,
+        "annuityRate": 21
+      }
+    ]
+  },
+  {
+    "code": "migunani",
+    "name": "BKK Migunani",
+    "requiresEmployee": false,
+    "rules": [
+      {
+        "audience": "all",
+        "minMonths": 1,
+        "maxMonths": 36,
+        "flatRate": 13,
+        "annuityRate": 20
+      },
+      {
+        "audience": "all",
+        "minMonths": 37,
+        "maxMonths": null,
+        "flatRate": 15,
+        "annuityRate": 21
+      }
+    ]
+  },
+  {
+    "code": "makaryo",
+    "name": "BKK Makaryo",
+    "requiresEmployee": true,
+    "rules": [
+      {
+        "audience": "internal",
+        "minMonths": 1,
+        "maxMonths": null,
+        "flatRate": 6,
+        "annuityRate": null
+      },
+      {
+        "audience": "external",
+        "minMonths": 1,
+        "maxMonths": 60,
+        "flatRate": 9,
+        "annuityRate": 15
+      },
+      {
+        "audience": "external",
+        "minMonths": 61,
+        "maxMonths": null,
+        "flatRate": null,
+        "annuityRate": 16
+      }
+    ]
+  }
+]

@@ -1,4 +1,5 @@
 export type Asset = {
+  creditProductId?: number | null;
   id: number;
   slug: string;
   code: string;

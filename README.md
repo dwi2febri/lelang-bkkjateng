@@ -157,3 +157,25 @@ Statistik pengunjung footer menggunakan tabel `site_visits`. Untuk instalasi yan
 Pengaturan banner beranda tersedia di `/kelola-banner` untuk admin. Untuk database lama, jalankan `npm run db:banners`, lalu build/restart API. Admin dapat mengunggah gambar dan mengatur teks, tombol, serta urutan slide; perubahan tampil di beranda setelah disimpan.
 
 Master kategori: jalankan `npm run db:categories` untuk menyiapkan tabel pada instalasi lama, lalu restart API. Admin dapat mengelola kategori lewat `/master-kategori`.
+
+### Log User dan aktivitas langsung
+
+Menu `/log-user` tersedia untuk admin, di atas Manajemen User. Jalankan `npm run db:user-logs` pada database instalasi lama, lalu `npm run build` dan restart API serta web. Setup baru melalui `npm run db:setup` sudah menyertakan tabel ini.
+
+Browser yang terlihat mengirim heartbeat setiap 15 detik. Status aktif memiliki toleransi 75 detik; sesi akun yang logout, dinonaktifkan, atau kedaluwarsa tidak dihitung aktif. Daftar diperbarui setiap 15 detik dengan pencarian, filter aktif, dan paginasi. Kartu Aktif sekarang dan Browser tercatat membuka daftar browser dengan nama/IP serta status terbaru. Tabel utama menampilkan riwayat terpisah: membuka halaman, kembali aktif, perubahan sesi akun, dan pengajuan minat. Heartbeat rutin pada halaman yang sama tidak menambah riwayat; identitas setiap peristiwa disimpan sesuai waktu kejadian. Riwayat tidak merekonstruksi aktivitas sebelum fitur ini diaktifkan. Jalankan ulang `npm run db:user-logs` untuk menambahkan tabel `user_activity` pada instalasi yang sudah memiliki `user_presence`.
+
+Identitas tamu menggunakan IP. Nama pengajuan ditautkan ke cookie browser setelah pengajuan berhasil; nama akun diambil dari sesi server saat login. Pengajuan lama sebelum fitur ini dipasang tidak dapat ditautkan otomatis ke browser. Penghapusan cookie atau perangkat berbeda menghasilkan catatan browser baru.
+
+API mempercayai proxy loopback untuk alamat IP. Di production, proxy lokal harus meneruskan IP klien melalui X-Forwarded-For dengan benar; API tetap mendengarkan pada 127.0.0.1. Endpoint daftar log dilindungi sesi admin dan tidak menyertakan token sesi. Waktu log disimpan dalam UTC dan ditampilkan sebagai WIB.
+
+### Master Produk Kredit
+
+Menu `/master-produk-kredit` menyediakan tambah/edit produk, status ketersediaan untuk pilihan baru, aturan tenor dalam bulan, bunga tahunan flat/anuitas, serta kelompok pegawai internal/eksternal. Lima produk awal (BKK Mikro, Agrari, Joglo, Migunani, Makaryo) diimpor dari file referensi pengguna `kalkulator_kredit_bkk_export_excel_v2 (1).html`, bukan diambil dari informasi bunga terbaru di internet. Data awal ada di `scripts/data/credit-products.json`; setup ulang tidak menimpa perubahan master.
+
+Pada instalasi lama, jalankan `npm run db:credit-products`, kemudian `npm run build` dan restart API serta web. Instalasi baru sudah menyertakannya pada `db:setup`. Di form aset, pilih Produk kredit untuk aset pada Pengaturan katalog lalu simpan. Produk yang dipilih menentukan simulasi, rincian angsuran, dan teks tombol Ajukan. Aset lama tidak dipasangkan ke produk secara otomatis. Tanpa produk, simulasi umum dan pengaturan kategori tetap digunakan.
+
+Bunga kosong pada suatu metode berarti metode tersebut tidak tersedia; bunga 0 berarti tanpa bunga. Rentang tenor divalidasi berurutan, tanpa celah atau tumpang tindih. Simulasi membatasi masukan teknis sampai 1.200 bulan dan Rp1 triliun, bukan pernyataan batas persetujuan kredit. Perubahan master berlaku pada semua aset terkait. Menonaktifkan produk mencegah pemilihan baru, tetapi tidak menghapus kaitan aset lama. Hasil simulasi tidak disimpan sebagai pengajuan kredit; tombol Ajukan menuju formulir minat aset yang sudah ada.
+
+Data dummy dapat dihubungkan ke produk kredit dengan `npm run db:demo-credit-products` setelah master produk tersedia. Perintah ini memperbarui hanya pasangan kode/slug dari seed: Kendaraan memakai BKK Migunani, kategori lainnya memakai BKK Joglo. Jalankan kembali setelah menambahkan seed katalog; pilihan produk pada aset dummy yang cocok akan disesuaikan kembali.
+
+Daftar Aset mendukung 10, 25, 50, atau 100 baris per halaman dan opsi Tampilkan semua. Pilihan semua mengikuti filter aktif; ringkasan nilai tetap menghitung seluruh hasil filter, bukan hanya halaman saat ini.

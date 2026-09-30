@@ -14,6 +14,8 @@ import {
   Files,
   BookOpen,
   Users,
+  Landmark,
+  Activity,
   X,
 } from "lucide-react";
 const groups = [
@@ -75,8 +77,10 @@ export function Sidebar({
             </div>;
           })}
           <Link href="/master-kategori" onClick={onClose} className={pathname.startsWith("/master-kategori") ? "active" : ""} aria-current={pathname.startsWith("/master-kategori") ? "page" : undefined}><Tags size={19} />Master Kategori</Link>
+          <Link href="/master-produk-kredit" onClick={onClose} className={pathname.startsWith("/master-produk-kredit") ? "active" : ""} aria-current={pathname.startsWith("/master-produk-kredit") ? "page" : undefined}><Landmark size={19} />Master Produk Kredit</Link>
           <Link href="/kelola-banner" onClick={onClose} className={pathname === "/kelola-banner" ? "active" : ""} aria-current={pathname === "/kelola-banner" ? "page" : undefined}><Images size={19} />Pengaturan Banner</Link>
           <Link href="/kelola-panduan" onClick={onClose} className={pathname === "/kelola-panduan" ? "active" : ""} aria-current={pathname === "/kelola-panduan" ? "page" : undefined}><BookOpen size={19} />Panduan Lelang</Link>
+          <Link href="/log-user" onClick={onClose} className={pathname.startsWith("/log-user") ? "active" : ""} aria-current={pathname.startsWith("/log-user") ? "page" : undefined}><Activity size={19} />Log User</Link>
           <Link href="/manajemen-user" onClick={onClose} className={pathname.startsWith("/manajemen-user") ? "active" : ""} aria-current={pathname.startsWith("/manajemen-user") ? "page" : undefined}><Users size={19} />Manajemen User</Link>
         </div>
         <div className="sidebar-bottom">

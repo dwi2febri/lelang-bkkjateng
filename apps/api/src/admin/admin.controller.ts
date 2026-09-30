@@ -27,6 +27,7 @@ import {
   StatusDto,
 } from "./admin.dto";
 const fields = [
+  "creditProductId",
   "slug",
   "code",
   "title",
@@ -101,6 +102,11 @@ export class AdminController {
       if(field.type==="select" && !field.options.includes(String(value))) throw new BadRequestException(`Pilihan ${field.label} tidak valid.`);
     }
   }
+  private async checkCreditProduct(id?:number|null, previous?:number|null) {
+    if(id==null) return;
+    const [product]=await this.db.query('SELECT active FROM credit_products WHERE id=?',[id]);
+    if(!product || (!product.active && id!==previous)) throw new BadRequestException('Pilih produk kredit aktif dari master.');
+  }
   private values(body: AssetDto) {
     if (body.village && !body.district)
       throw new BadRequestException("Pilih kecamatan sebelum kelurahan/desa.");
@@ -122,6 +128,7 @@ export class AdminController {
     );
   }
   @Post("assets") async create(@Body() body: AssetDto) {
+    await this.checkCreditProduct(body.creditProductId);
     await this.checkCategory(body.category, body);
     const result = await this.db.execute(
       `INSERT INTO assets (${fields.join(",")}) VALUES (${fields.map(() => "?").join(",")})`,
@@ -135,6 +142,8 @@ export class AdminController {
     @Body() body: AssetDto,
   ) {
     const existing = await this.asset(id);
+    if(body.creditProductId===undefined) body.creditProductId=existing.creditProductId;
+    await this.checkCreditProduct(body.creditProductId,existing.creditProductId);
     body.province ??= existing.province;
     const parentChanged = body.province !== existing.province || body.city !== existing.city;
     body.district ??= parentChanged ? "" : existing.district;

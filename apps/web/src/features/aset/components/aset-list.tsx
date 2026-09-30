@@ -1,6 +1,7 @@
 "use client";
 import { useRegions } from "../use-regions";
 import { matchesAsset } from "../filters";
+import { assetPage } from "../pagination";
 import {summarizeAssets} from "../summary";
 import { useCategories } from "@/features/categories/categories";
 import { PriceInput } from "@/components/ui/price-input";
@@ -14,6 +15,7 @@ import {
   Archive,
   RotateCcw,
   Building2,
+  ChevronLeft, ChevronRight,
   Layers3, Handshake, FileSignature, Gavel,
 } from "lucide-react";
 import { asetService } from "../services/aset-service";
@@ -25,6 +27,8 @@ import { Modal } from "@/components/ui/modal";
 import { notify } from "@/store/notification-store";
 export function AsetList() {
   const categories = useCategories();
+  const [pageSize, setPageSize] = useState("10");
+  const [page, setPage] = useState(1);
   const [category,setCategory]=useState(""),[saleMethod,setSaleMethod]=useState(""),[province,setProvince]=useState(""),[city,setCity]=useState(""),[minPrice,setMinPrice]=useState(""),[maxPrice,setMaxPrice]=useState("");
   const [district,setDistrict]=useState(""),[village,setVillage]=useState("");
   const {provinces,regencies,districts,villages,provincesLoading,regenciesLoading,districtsLoading,villagesLoading,error:regionsError}=useRegions(province,city,district);
@@ -51,6 +55,13 @@ export function AsetList() {
   }, []);
   const rangeError = !!minPrice && !!maxPrice && Number(minPrice)>Number(maxPrice);
   const visible = rangeError ? [] : assets.filter(a=>matchesAsset(a,{q,status:filter,category,saleMethod,province,city,district,village,minPrice,maxPrice}));
+  const pagination = assetPage(visible, page, pageSize);
+  useEffect(() => {
+    setPage(1);
+  }, [q, filter, category, saleMethod, province, city, district, village, minPrice, maxPrice, pageSize]);
+  useEffect(() => {
+    setPage(current => Math.min(current, pagination.pages));
+  }, [pagination.pages]);
   const summary=summarizeAssets(rangeError?[]:assets.filter(a=>matchesAsset(a,{q,status:filter,category,saleMethod:"",province,city,district,village,minPrice,maxPrice})));
   const summaryIcons=[Layers3,Handshake,FileSignature,Gavel];
   const activeFilterCount = [category, saleMethod, province, city, district, village, minPrice, maxPrice].filter(Boolean).length;
@@ -126,6 +137,11 @@ export function AsetList() {
         {regionsError&&<p role="alert" className="asset-filter-error">{regionsError}</p>}
       </section>
       <div className="admin-panel asset-list-panel">
+        <div className="asset-table-toolbar">
+          <Select label="Tampilan tabel" name="assetPageSize" value={pageSize} onChange={setPageSize}
+            options={[...['10','25','50','100'].map(value=>({value,label:`${value} aset per halaman`})),{value:'all',label:'Tampilkan semua'}]} />
+          <span aria-live="polite">{loading ? 'Memuat aset...' : error ? 'Data belum tersedia' : `${pagination.from}–${pagination.to} dari ${visible.length} aset sesuai filter`}</span>
+        </div>
         {error ? (
           <div className="admin-empty">
             <p role="alert">{error}</p>
@@ -152,7 +168,7 @@ export function AsetList() {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((a) => (
+                {pagination.rows.map((a) => (
                   <tr key={a.id}>
                     <td>
                       <div className="asset-table-info">
@@ -207,10 +223,14 @@ export function AsetList() {
             </table>
           </div>
         )}
-        <div className="admin-pagination">
-          <span>{visible.length} aset ditampilkan</span>
-          <span>Perubahan tersimpan pada MySQL</span>
-        </div>
+        {!loading && !error && <div className="admin-pagination asset-table-pagination">
+          <span aria-live="polite">{pagination.from}–{pagination.to} dari {visible.length} aset</span>
+          {pageSize !== 'all' && <nav aria-label="Halaman daftar aset">
+            <Button variant="secondary" disabled={pagination.page === 1} onClick={()=>setPage(pagination.page-1)} aria-label="Halaman aset sebelumnya"><ChevronLeft size={16}/><span>Sebelumnya</span></Button>
+            <span>Halaman {pagination.page} dari {pagination.pages}</span>
+            <Button variant="secondary" disabled={pagination.page === pagination.pages} onClick={()=>setPage(pagination.page+1)} aria-label="Halaman aset berikutnya"><span>Berikutnya</span><ChevronRight size={16}/></Button>
+          </nav>}
+        </div>}
       </div>
       {selected && (
         <Modal

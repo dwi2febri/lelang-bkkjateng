@@ -1,4 +1,6 @@
 export type CatalogAsset = {
+  creditProductId?: number | null;
+  creditProduct?: import("@/features/credit-products/calculator").CreditProduct | null;
   categorySettings?: import("@/features/categories/settings").CategorySettings;
   id: number;
   slug: string;

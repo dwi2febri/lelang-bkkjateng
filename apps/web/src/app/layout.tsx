@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { PresenceTracker } from "@/components/presence-tracker";
 import { PublicFavoritesProvider } from "@/features/catalog/public-favorites-provider";
 export const metadata: Metadata = {
   title: "Lelang BKK Jateng | Temukan Aset Pilihan Anda",
@@ -11,7 +12,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="id">
-      <body><PublicFavoritesProvider>{children}</PublicFavoritesProvider></body>
+      <body><PresenceTracker /><PublicFavoritesProvider>{children}</PublicFavoritesProvider></body>
     </html>
   );
 }

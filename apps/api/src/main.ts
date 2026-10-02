@@ -1,4 +1,5 @@
 import { CreditProductsController } from "./credit-products.controller";
+import { AssetImportController } from "./asset-import.controller";
 import { CategoriesController } from "./categories.controller";
 import { PresenceController, PresenceService } from "./presence";
 import { AssetUploadsController, PublicAssetUploadsController } from "./asset-uploads.controller";
@@ -23,6 +24,7 @@ import { InterestChatController } from "./interest-chat.controller";
 config({ path: resolve(__dirname, "../../../.env"), quiet: true });
 @Module({
   controllers: [
+    AssetImportController,
     CreditProductsController,
     PresenceController,
     AssetsController,

@@ -26,7 +26,7 @@ import {
   ListDto,
   StatusDto,
 } from "./admin.dto";
-const fields = [
+export const fields = [
   "creditProductId",
   "slug",
   "code",
@@ -128,14 +128,18 @@ export class AdminController {
     );
   }
   @Post("assets") async create(@Body() body: AssetDto) {
-    await this.checkCreditProduct(body.creditProductId);
-    await this.checkCategory(body.category, body);
+    const values = await this.validateAssetInput(body);
     const result = await this.db.execute(
       `INSERT INTO assets (${fields.join(",")}) VALUES (${fields.map(() => "?").join(",")})`,
-      this.values(body),
+      values,
     );
     await this.savePhotos(result.insertId, body.photos || [body.image]);
     return this.asset(result.insertId);
+  }
+  async validateAssetInput(body: AssetDto) {
+    await this.checkCreditProduct(body.creditProductId);
+    await this.checkCategory(body.category, body);
+    return this.values(body);
   }
   @Put("assets/:id") async update(
     @Param("id", ParseIntPipe) id: number,

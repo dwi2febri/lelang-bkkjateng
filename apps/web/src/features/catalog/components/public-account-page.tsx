@@ -24,6 +24,10 @@ export function PublicAccountPage({ mode }: { mode: "register" | "login" }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   useEffect(() => {
+    const frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    return () => cancelAnimationFrame(frame);
+  }, [mode]);
+  useEffect(() => {
     const latest = readLatestApplicant();
     if (latest) { setName(latest.name); setEmail(latest.email); setPhone(latest.phone); }
   }, []);
@@ -74,7 +78,7 @@ export function PublicAccountPage({ mode }: { mode: "register" | "login" }) {
   return <main className="container public-account-page">
     <div className="public-breadcrumb"><Link href="/">Beranda</Link><span>/</span><Link href="/riwayat-pengajuan">History Pengajuan</Link><span>/</span><span>{mode === "register" ? "Daftar akun" : "Masuk"}</span></div>
     <section className="public-account-layout">
-      <div className="public-account-intro"><span className="overline">AKUN PENGUNJUNG</span><h1>{mode === "register" ? "Simpan riwayat di satu akun" : "Selamat datang kembali"}</h1><p>{mode === "register" ? "Verifikasi email untuk menghubungkan pengajuan lama, lalu akses riwayat dan aset favorit dari perangkat lain." : "Masuk untuk melihat kembali pengajuan dan aset yang Anda sukai."}</p><div className="public-account-benefit"><ShieldCheck size={20}/><span>Riwayat pengajuan hanya dapat diakses setelah Anda masuk ke akun.</span></div></div>
+      <div className={`public-account-intro public-account-intro-illustrated${mode === "register" ? " public-account-intro-register" : ""}`}><span className="overline">AKUN PENGUNJUNG</span><h1>{mode === "register" ? "Simpan riwayat di satu akun" : "Selamat datang kembali"}</h1><p>{mode === "register" ? "Verifikasi email untuk menghubungkan pengajuan lama, lalu akses riwayat dan aset favorit dari perangkat lain." : "Masuk untuk melihat kembali pengajuan dan aset yang Anda sukai."}</p><div className="public-account-benefit"><ShieldCheck size={20}/><span>Riwayat pengajuan hanya dapat diakses setelah Anda masuk ke akun.</span></div></div>
       <div className="public-account-card"><span className="public-account-card-icon">{mode === "register" ? <MailCheck size={24}/> : <LockKeyhole size={24}/>}</span><h2>{mode === "register" ? "Daftar akun" : "Masuk akun"}</h2><p>{mode === "register" ? "Data pengajuan terakhir di browser ini akan terisi otomatis. Untuk pengajuan lama, nama dan WhatsApp terisi setelah email diverifikasi." : "Gunakan email dan kata sandi yang didaftarkan."}</p>
         <form onSubmit={submit} className="public-account-form" noValidate>
           <label>Email<input type="email" autoComplete="email" value={email} onChange={e => {setEmail(e.target.value);setSent(false);setVerified(false);}} required maxLength={150} placeholder="nama@email.com" /></label>

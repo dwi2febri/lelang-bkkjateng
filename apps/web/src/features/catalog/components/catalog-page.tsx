@@ -6,6 +6,7 @@ import { HeroSlider } from "./hero-slider";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/select";
 import { PublicFooter } from "./public-footer";
@@ -26,7 +27,6 @@ import {
   MapPin,
   ChevronDown,
   Heart,
-  House,
   Building2,
   Trees,
   CarFront,
@@ -42,9 +42,6 @@ import {
   Ruler,
   BedDouble,
   LogOut,
-  Handshake,
-  Gavel,
-  FileText,
 } from "lucide-react";
 import type { CatalogAsset as Asset } from "../types";
 import { getCatalog, getInterestStatus, InterestRequestError, sendInterest } from "../services/catalog-service";
@@ -65,9 +62,9 @@ const date = (s: string) =>
     timeZone: "Asia/Jakarta",
   });
 const saleMethodCards = [
-  { name: "Jual Beli", description: "Pilihan aset dengan penawaran jual beli langsung.", icon: Handshake, tone: "buy" },
-  { name: "Lelang", description: "Temukan aset yang ditawarkan melalui proses lelang.", icon: Gavel, tone: "auction" },
-  { name: "Cessie", description: "Jelajahi peluang aset melalui skema cessie.", icon: FileText, tone: "cessie" },
+  { name: "Jual Beli", description: "Pilihan aset dengan penawaran jual beli langsung.", icon: "/images/sale-methods/jual-beli-3d.webp", tone: "buy" },
+  { name: "Lelang", description: "Temukan aset yang ditawarkan melalui proses lelang.", icon: "/images/sale-methods/lelang-3d.webp", tone: "auction" },
+  { name: "Cessie", description: "Jelajahi peluang aset melalui skema cessie.", icon: "/images/sale-methods/cessie-3d.webp", tone: "cessie" },
 ] as const;
 export default function CatalogPage({
   view = "home",
@@ -358,7 +355,7 @@ export default function CatalogPage({
       <header>
         <div className="container header-inner">
           <a href="/" className="brand" aria-label="Beranda BKK Jateng">
-            <BrandLogo />
+            <BrandLogo variant="original" />
           </a>
           <nav className={menu ? "open" : ""}>
             {[
@@ -404,7 +401,7 @@ export default function CatalogPage({
           </button>
         </div>
       </header>
-      <main>
+      <main className={view === "home" && !selected && !children ? "homepage-compact" : undefined}>
         {children ||
           (selected ? (
             <AssetDetail
@@ -506,7 +503,7 @@ export default function CatalogPage({
             <>
               {view === "home" && <HeroSlider />}
               {view !== "home" && (
-                <section className="public-page-intro">
+                <section className={`public-page-intro${view === "catalog" || view === "schedule" ? " public-page-intro-compact" : ""}`}>
                   <div className="container">
                     <div className="public-breadcrumb">
                       <Link href="/">Beranda</Link>
@@ -637,6 +634,25 @@ export default function CatalogPage({
                   </section>
                 </>
               )}
+              {view === "home" && (
+                <section className="sale-method-shortcuts" aria-labelledby="sale-method-shortcuts-title">
+                  <div className="container">
+                  <div className="sale-method-shortcuts-heading">
+                    <span className="overline">JELAJAHI ASET</span>
+                    <h2 id="sale-method-shortcuts-title">Pilih metode penjualan</h2>
+                  </div>
+                  <div className="sale-method-shortcuts-grid">
+                    {saleMethodCards.map(({ name, description, icon, tone }) => (
+                      <Link key={name} className={`sale-method-shortcut sale-method-shortcut-${tone}`} href={catalogHref({ saleMethod: name })}>
+                        <span className="sale-method-shortcut-icon" aria-hidden="true"><img src={icon} alt="" width={72} height={72} loading="lazy" decoding="async" /></span>
+                        <span className="sale-method-shortcut-copy"><strong>{name}</strong><small>{description}</small></span>
+                        <span className="sale-method-shortcut-arrow"><ArrowUpRight size={18} /></span>
+                      </Link>
+                    ))}
+                  </div>
+                  </div>
+                </section>
+              )}
               <section
                 className={
                   "catalog-section" +
@@ -671,23 +687,6 @@ export default function CatalogPage({
                     />
                   )}
                   <div className="catalog-results">
-                    {view === "home" && (
-                      <section className="sale-method-shortcuts" aria-labelledby="sale-method-shortcuts-title">
-                        <div className="sale-method-shortcuts-heading">
-                          <span className="overline">JELAJAHI ASET</span>
-                          <h2 id="sale-method-shortcuts-title">Pilih metode penjualan</h2>
-                        </div>
-                        <div className="sale-method-shortcuts-grid">
-                          {saleMethodCards.map(({ name, description, icon: Icon, tone }) => (
-                            <Link key={name} className={`sale-method-shortcut sale-method-shortcut-${tone}`} href={catalogHref({ saleMethod: name })}>
-                              <span className="sale-method-shortcut-icon"><Icon size={24} strokeWidth={1.8} /></span>
-                              <span className="sale-method-shortcut-copy"><strong>{name}</strong><small>{description}</small></span>
-                              <span className="sale-method-shortcut-arrow"><ArrowUpRight size={18} /></span>
-                            </Link>
-                          ))}
-                        </div>
-                      </section>
-                    )}
                     <div className="section-heading">
                       <div>
                         <span className="overline">
@@ -1010,11 +1009,8 @@ export default function CatalogPage({
                 </div>
               </section>
               <section className="container guide-banner">
-                <div className="guide-illustration">
-                  <House size={68} strokeWidth={1} />
-                  <span>
-                    <Check size={22} />
-                  </span>
+                <div className="guide-illustration" aria-hidden="true">
+                  <Image src="/images/auction-guide-illustration.png" alt="" width={1536} height={1024} sizes="(max-width: 620px) 240px, (max-width: 800px) 160px, 300px" />
                 </div>
                 <div>
                   <span className="overline">

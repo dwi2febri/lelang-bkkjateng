@@ -2,6 +2,7 @@
 import { useRegions } from "../use-regions";
 import { matchesAsset } from "../filters";
 import { assetPage } from "../pagination";
+import { AssetExcelImport } from "./asset-excel-import";
 import {summarizeAssets} from "../summary";
 import { useCategories } from "@/features/categories/categories";
 import { PriceInput } from "@/components/ui/price-input";
@@ -10,6 +11,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Plus,
+  FileSpreadsheet,
   Search,
   Pencil,
   Archive,
@@ -26,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { notify } from "@/store/notification-store";
 export function AsetList() {
+  const [importOpen, setImportOpen] = useState(false);
   const categories = useCategories();
   const [pageSize, setPageSize] = useState("10");
   const [page, setPage] = useState(1);
@@ -103,9 +106,12 @@ export function AsetList() {
                 <small>{loading?"Memuat...":error?"Belum tersedia":`${item.count} aset`}</small>
               </button>;})}
             </div>
-            <Link href="/aset/baru" className="admin-button admin-button-primary">
-              <Plus size={17} />Tambah Aset
-            </Link>
+            <div className="asset-create-actions">
+              <button type="button" className="admin-button admin-button-secondary" onClick={()=>setImportOpen(true)}><FileSpreadsheet size={17}/>Upload Excel</button>
+              <Link href="/aset/baru" className="admin-button admin-button-primary">
+                <Plus size={17} />Tambah Aset
+              </Link>
+            </div>
           </div>
         </div>
         <div className="asset-filter-grid">
@@ -232,6 +238,7 @@ export function AsetList() {
           </nav>}
         </div>}
       </div>
+      {importOpen && <AssetExcelImport onClose={()=>setImportOpen(false)} onImported={()=>{setPage(1);load();}}/>}
       {selected && (
         <Modal
           title={

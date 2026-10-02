@@ -1,5 +1,6 @@
 "use client";
 import {useState} from 'react';
+import {Select} from '@/components/ui/select';
 import {creditTerms,creditCalculation,type CreditProduct,type CreditMethod} from './calculator';
 const money=(value:number)=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(value);
 export function CreditSimulation({price,product}:{price:number;product:CreditProduct}) {
@@ -12,8 +13,8 @@ export function CreditSimulation({price,product}:{price:number;product:CreditPro
   <div className="asset-calculator">
    <label>Harga aset<input readOnly value={money(price)}/></label>
    <label>Jangka waktu (bulan)<input type="number" min={1} max={1200} step={1} value={tenor} onChange={event=>{setTenor(event.target.value);const next=creditTerms(product,Number(event.target.value),terms?.method||method,audience);if(next)setMethod(next.method);}}/></label>
-   {product.requiresEmployee&&<label>Status pegawai<select value={audience} onChange={event=>{setAudience(event.target.value);const next=creditTerms(product,months,terms?.method||method,event.target.value);if(next)setMethod(next.method);}}><option value="external">Pegawai Eksternal</option><option value="internal">Pegawai Internal</option></select></label>}
-   <label>Metode perhitungan<select value={terms?.method||method} onChange={event=>setMethod(event.target.value as CreditMethod)}><option value="flat" disabled={!!terms&&terms.rule.flatRate===null}>Flat</option><option value="anuitas" disabled={!!terms&&terms.rule.annuityRate===null}>Anuitas</option></select></label>
+   {product.requiresEmployee&&<Select label="Status pegawai" name="simulationAudience" searchable={false} value={audience} options={[{value:'external',label:'Pegawai Eksternal'},{value:'internal',label:'Pegawai Internal'}]} onChange={value=>{setAudience(value);const next=creditTerms(product,months,terms?.method||method,value);if(next)setMethod(next.method);}}/>}
+   <Select label="Metode perhitungan" name="simulationMethod" searchable={false} value={terms?.method||method} onChange={value=>setMethod(value as CreditMethod)} options={[{value:'flat',label:'Flat',disabled:!!terms&&terms.rule.flatRate===null},{value:'anuitas',label:'Anuitas',disabled:!!terms&&terms.rule.annuityRate===null}]}/>
    <label>Bunga per tahun (%)<input readOnly value={terms?String(terms.rate):'—'}/></label>
   </div>
   {terms&&terms.method!==method&&<p className="asset-detail-muted">Metode otomatis mengikuti ketentuan produk: {terms.method==='flat'?'Flat':'Anuitas'}.</p>}

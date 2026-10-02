@@ -434,9 +434,28 @@
 }
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 22px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+.dashboard-grid > .admin-panel { min-width: 0; display: flex; flex-direction: column; }
+.dashboard-grid .dashboard-processing,
+.dashboard-grid .panel-bottom-link { margin-top: auto; }
+.dashboard-calendar { margin-top: 24px; }
+.dashboard-calendar .schedule-calendar-layout {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+.dashboard-calendar .calendar-assets-card { display: flex; flex-direction: column; }
+.dashboard-calendar .auction-calendar,
+.dashboard-calendar .calendar-assets-card { border-color: #dfe7ef; box-shadow: 0 5px 20px #163c5805; }
+.dashboard-calendar .calendar-agenda-empty { flex: 1; justify-content: center; }
+.dashboard-calendar .calendar-agenda-list { align-content: start; }
+.dashboard-calendar .calendar-asset-info h4 { overflow-wrap: anywhere; }
+@media (max-width: 1200px) {
+  .dashboard-grid,
+  .dashboard-calendar .schedule-calendar-layout { grid-template-columns: 1fr; }
 }
 .dashboard-analytics { display:grid; gap:22px; margin:0 0 24px; }
 .dashboard-analytics-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:6px 0; }
@@ -485,12 +504,13 @@
 .dashboard-map-results { max-height:440px; overflow:auto; border-left:1px solid #e6edf3; }
 .dashboard-map-results > div { display:flex; align-items:center; gap:8px; border-bottom:1px solid #e8eff4; padding:14px; }
 .dashboard-map-results > div.selected { background:#edf6fc; box-shadow:inset 3px 0 #22658e; }
-.dashboard-map-results button { display:grid; gap:5px; flex:1; min-width:0; padding:0; border:0; background:transparent; color:#224760; text-align:left; cursor:pointer; font:inherit; }
+.dashboard-map-results button { display:grid; grid-template-columns:minmax(0,1fr); justify-content:stretch; justify-items:stretch; gap:5px; flex:1; min-width:0; padding:0; border:0; background:transparent; color:#224760; text-align:left; cursor:pointer; font:inherit; }
+.dashboard-map-results button > * { min-width:0; overflow-wrap:anywhere; }
 .dashboard-map-results small { color:#8b9fac; font-size:10px; }
 .dashboard-map-results strong { font-size:12px; line-height:1.5; }
 .dashboard-map-results span { color:#8b9fac; font-size:11px; }
 .dashboard-map-results b { color:#286b92; font-size:12px; }
-.dashboard-map-results a { color:#286b92; padding:5px; }
+.dashboard-map-results a { flex:none; color:#286b92; padding:5px; }
 .dashboard-map-popup { width:260px; max-width:calc(100vw - 100px); padding:3px; color:#234d69; font-size:12px; line-height:1.6; }
 .dashboard-map-popup-cover { display:flex; align-items:center; justify-content:center; width:100%; aspect-ratio:16/9; margin-bottom:12px; overflow:hidden; border-radius:8px; background:#edf3f7; color:#6d8497; }
 .dashboard-map-popup-cover img { display:block; width:100%; height:100%; object-fit:cover; }
@@ -1976,9 +1996,8 @@
 .admin-brand:has(.brand-logo) {
   width: fit-content;
   max-width: 100%;
-  padding: 8px;
-  border-radius: 10px;
-  background: #fff;
+  padding: 0;
+  background: transparent;
 }
 .admin-brand .brand-logo {
   width: 270px;
@@ -2145,7 +2164,7 @@
 
 /* Minimal sidebar identity and flat navigation highlights. */
 .admin-sidebar .admin-brand:has(.brand-logo) { padding:6px; margin:0 auto 28px; }
-.admin-sidebar .admin-brand .brand-logo { width:150px; }
+.admin-sidebar .admin-brand .brand-logo { width:180px; }
 .admin-sidebar .sidebar-links a,
 .admin-sidebar .sidebar-links a.active,
 .admin-sidebar .sidebar-group-toggle { border-radius:0; }
@@ -2154,7 +2173,7 @@
 /* Align sidebar identity with the navbar and allow desktop collapse. */
 .admin-sidebar { padding-top:102px; }
 .sidebar-logo-header { position:absolute; inset:0 0 auto; height:78px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid #ffffff1a; }
-.admin-sidebar .sidebar-logo-header .admin-brand { margin:0; padding:4px 8px; border-radius:9px; }
+.admin-sidebar .sidebar-logo-header .admin-brand { margin:0; padding:0; border-radius:0; }
 .admin-sidebar .sidebar-links a,
 .admin-sidebar .sidebar-links a.active,
 .admin-sidebar .sidebar-group-toggle { border-radius:14px; }
@@ -3125,3 +3144,27 @@
   .admin-app .asset-table-pagination nav { gap: 8px; }
   .admin-app .asset-table-pagination .admin-button > span { display: none; }
 }
+
+/* Excel import: preview and errors stay within a scrollable dialog. */
+.asset-summary-actions { flex-wrap:wrap; }
+.asset-summary-cards { flex:1 1 540px; }
+.asset-create-actions { display:flex; flex-direction:column; gap:10px; flex:0 0 150px; }
+.asset-create-actions .admin-button { width:100%; justify-content:center; white-space:nowrap; }
+.asset-excel-dialog .admin-modal { width:min(1040px,100%); max-width:1040px; max-height:88dvh; display:flex; flex-direction:column; padding:0; overflow:hidden; }
+.asset-excel-dialog .admin-modal-heading { flex:none; margin:0; padding:22px 26px; border-bottom:1px solid #e5edf3; }
+.asset-excel-body { padding:22px 26px; overflow:auto; min-height:0; }
+.asset-excel-intro { display:flex; align-items:flex-start; gap:14px; color:#185781; margin-bottom:18px; }
+.asset-excel-intro svg { flex:none; }
+.asset-excel-intro p { margin:6px 0 0; color:#718798; line-height:1.6; }
+.asset-excel-steps { padding-left:20px; margin:20px 0; color:#426075; line-height:1.8; }
+.asset-excel-steps li + li { margin-top:7px; }
+.asset-excel-upload { display:flex; flex-direction:column; gap:10px; align-items:center; border:2px dashed #aac6da; border-radius:12px; padding:22px; background:#f5faff; color:#185781; text-align:center; }
+.asset-excel-upload input { max-width:100%; }
+.asset-excel-upload span,.asset-excel-filename { font-size:12px; color:#718798; overflow-wrap:anywhere; }
+.asset-excel-table { margin:14px 0; max-height:340px; overflow:auto; border:1px solid #e5edf3; border-radius:10px; }
+.asset-excel-table .admin-table td { white-space:normal; overflow-wrap:anywhere; }
+.asset-excel-table img { object-fit:cover; border-radius:6px; }
+.asset-excel-success { background:#e7f5ee; color:#237451; padding:14px; border-radius:10px; }
+.asset-excel-sample { background:#fff5de; color:#856116; padding:12px; border-radius:8px; line-height:1.6; }
+.asset-excel-actions { flex:none; display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; padding:18px 26px; border-top:1px solid #e5edf3; }
+@media(max-width:600px) { .asset-excel-body,.asset-excel-dialog .admin-modal-heading { padding:18px; } .asset-excel-actions { padding:16px; } }

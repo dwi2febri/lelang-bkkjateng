@@ -20,6 +20,7 @@ import { StatusBadge } from "@/features/approval/components/status-badge";
 import { currency, formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DashboardAnalytics } from "./dashboard-analytics";
+import { ScheduleCalendar } from "@/features/catalog/components/schedule-calendar";
 type Overview = {
   assets: { total: number; active: number; upcoming: number };
   interests: {
@@ -233,6 +234,13 @@ export function Dashboard() {
           </Link>
         </section>
       </div>
+      <section className="dashboard-calendar" aria-label="Kalender lelang aset">
+        <ScheduleCalendar
+          period="all"
+          sourceAssets={portfolio.filter((asset) => !asset.archived)}
+          assetHref={(asset) => `/aset/${asset.id}`}
+        />
+      </section>
       <div className="dashboard-info">
         <span>
           <CheckCircle2 size={20} />

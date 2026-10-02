@@ -23,7 +23,14 @@ const dayKey = (date: Date) =>
   }).format(date);
 const key = (year: number, month: number, day: number) =>
   `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-export function ScheduleCalendar({ period }: { period: string }) {
+type CalendarAsset = Pick<CatalogAsset, "id" | "slug" | "code" | "title" | "category" | "city" | "image" | "auctionDate"> & {
+  saleMethod?: string;
+};
+export function ScheduleCalendar({ period, sourceAssets, assetHref }: {
+  period: string;
+  sourceAssets?: CalendarAsset[];
+  assetHref?: (asset: CalendarAsset) => string;
+}) {
   const [month, setMonth] = useState(() => {
     const [year, month] = dayKey(new Date()).split("-").map(Number);
     return { year, month: month - 1 };
@@ -61,7 +68,7 @@ export function ScheduleCalendar({ period }: { period: string }) {
       controller.abort();
     };
   }, [month.year, holidayRetry]);
-  const [assets, setAssets] = useState<CatalogAsset[]>([]);
+  const [fetchedAssets, setAssets] = useState<CatalogAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
@@ -75,6 +82,11 @@ export function ScheduleCalendar({ period }: { period: string }) {
     timeZone: "UTC",
   }).format(new Date(Date.UTC(month.year, month.month, 1)));
   useEffect(() => {
+    if (sourceAssets !== undefined) {
+      setLoading(false);
+      setError(false);
+      return;
+    }
     const controller = new AbortController();
     setLoading(true);
     setError(false);
@@ -106,14 +118,17 @@ export function ScheduleCalendar({ period }: { period: string }) {
     }
     void load();
     return () => controller.abort();
-  }, [month.year, month.month, days, period, retry]);
+  }, [month.year, month.month, days, period, retry, sourceAssets]);
   function move(delta: number) {
     const next = new Date(Date.UTC(month.year, month.month + delta, 1));
     setMonth({ year: next.getUTCFullYear(), month: next.getUTCMonth() });
     setSelectedDate(key(next.getUTCFullYear(), next.getUTCMonth(), 1));
   }
-  const scheduledAssets = assets.filter((asset): asset is CatalogAsset & { auctionDate: string } => asset.saleMethod === "Lelang" && !!asset.auctionDate);
-  const groups = new Map<string, (CatalogAsset & { auctionDate: string })[]>();
+  const monthPrefix = key(month.year, month.month, 1).slice(0, 7);
+  const scheduledAssets = (sourceAssets ?? fetchedAssets).filter((asset): asset is CalendarAsset & { auctionDate: string } =>
+    asset.saleMethod === "Lelang" && !!asset.auctionDate && dayKey(new Date(asset.auctionDate)).startsWith(monthPrefix),
+  );
+  const groups = new Map<string, (CalendarAsset & { auctionDate: string })[]>();
   for (const asset of scheduledAssets) {
     const date = dayKey(new Date(asset.auctionDate));
     groups.set(date, [...(groups.get(date) || []), asset]);
@@ -173,7 +188,7 @@ export function ScheduleCalendar({ period }: { period: string }) {
             ? "Memuat jadwal..."
             : error
               ? "Jadwal belum dapat dimuat."
-              : `${assets.length} aset sesuai filter bulan ini. Klik tanggal untuk melihat aset.`}
+              : `${scheduledAssets.length} aset lelang bulan ini. Klik tanggal untuk melihat aset.`}
         </p>
         <div className="auction-calendar-grid" aria-busy={loading}>
           {["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"].map(
@@ -319,7 +334,7 @@ export function ScheduleCalendar({ period }: { period: string }) {
               <Link
                 className="calendar-asset"
                 key={asset.id}
-                href={`/katalog-aset/${encodeURIComponent(asset.slug)}`}
+                href={assetHref ? assetHref(asset) : `/katalog-aset/${encodeURIComponent(asset.slug)}`}
               >
                 <div className="calendar-asset-time">
                   <Clock3 size={18} />

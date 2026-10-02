@@ -20,7 +20,7 @@ export function PublicFooter() {
   return <footer className="public-footer">
     <div className="container public-footer-grid">
       <div className="public-footer-about">
-        <img src="/logo/bkk-lelang-bordered.png" alt="BKK Jateng Lelang dan Katalog Aset" width={2172} height={724} />
+        <img src="/logo/bkk-lelang-v2.png" alt="BKK Jateng Lelang dan Katalog Aset" width={2172} height={724} />
         <p>PT BPR BKK Jateng (Perseroda) adalah pelaku jasa keuangan berizin dan diawasi oleh Otoritas Jasa Keuangan sekaligus merupakan Bank Peserta Penjaminan Lembaga Penjamin Simpanan (LPS)</p>
       </div>
       <div><h4>Alamat</h4><p className="public-footer-line"><MapPin size={18} /><span>Jl. Tanjung No.11-A Sekayu, Semarang Tengah, Kota Semarang 50132</span></p></div>

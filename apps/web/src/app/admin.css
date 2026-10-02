@@ -2164,7 +2164,7 @@
 
 /* Minimal sidebar identity and flat navigation highlights. */
 .admin-sidebar .admin-brand:has(.brand-logo) { padding:6px; margin:0 auto 28px; }
-.admin-sidebar .admin-brand .brand-logo { width:180px; }
+.admin-sidebar .admin-brand .brand-logo { width:150px; }
 .admin-sidebar .sidebar-links a,
 .admin-sidebar .sidebar-links a.active,
 .admin-sidebar .sidebar-group-toggle { border-radius:0; }
@@ -2173,7 +2173,7 @@
 /* Align sidebar identity with the navbar and allow desktop collapse. */
 .admin-sidebar { padding-top:102px; }
 .sidebar-logo-header { position:absolute; inset:0 0 auto; height:78px; display:flex; align-items:center; justify-content:center; border-bottom:1px solid #ffffff1a; }
-.admin-sidebar .sidebar-logo-header .admin-brand { margin:0; padding:0; border-radius:0; }
+.admin-sidebar .sidebar-logo-header .admin-brand { margin:0; padding:4px 8px; border-radius:9px; background:#fff; }
 .admin-sidebar .sidebar-links a,
 .admin-sidebar .sidebar-links a.active,
 .admin-sidebar .sidebar-group-toggle { border-radius:14px; }

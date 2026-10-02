@@ -4549,7 +4549,7 @@ footer button {
 .public-footer-grid { display:grid; grid-template-columns:1.3fr 1fr 1.1fr .5fr; gap:36px; padding-bottom:32px; }
 .public-footer h4 { color:#fff; font-size:16px; margin:0 0 20px; }
 .public-footer p { font-size:13px; line-height:1.9; color:#c8d4de; margin:0; }
-.public-footer-about img { display:block; width:225px; max-width:100%; height:auto; margin-bottom:18px; }
+.public-footer-about img { display:block; width:225px; max-width:100%; height:auto; margin-bottom:18px; background:#fff; padding:8px; border-radius:10px; }
 .public-footer-line { display:flex; align-items:flex-start; gap:12px; }
 .public-footer svg { flex-shrink:0; color:#fff; }
 .public-footer-line svg { margin-top:4px; }

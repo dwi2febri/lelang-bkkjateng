@@ -51,7 +51,7 @@ export function Sidebar({
       <aside id="admin-sidebar" inert={hidden} className={"admin-sidebar " + (open ? "show" : "")}>
         <div className="sidebar-logo-header">
         <Link href="/dashboard" className="admin-brand">
-          <BrandLogo />
+          <BrandLogo variant="original" />
         </Link>
         </div>
         <button

@@ -93,7 +93,7 @@ export const iconLabels: Record<string,string> = {
   solar: "Energi",
   auction: "Lelang",
 };
-export type Category = {name:string;label:string;icon:string;showHome:boolean;sortOrder:number;version:number;settings?:CategorySettings};
+export type Category = {assetCount?:number;name:string;label:string;icon:string;showHome:boolean;sortOrder:number;version:number;settings?:CategorySettings};
 export function CategoryIcon({name,size=26}:{name:string;size?:number}) {const Icon=categoryIcons[name as keyof typeof categoryIcons]||Building2;return <Icon size={size} strokeWidth={1.6}/>;}
 export function useCategories() {
  const [categories,setCategories]=useState<Category[]>(defaults.map(c=>({...c,version:1})));

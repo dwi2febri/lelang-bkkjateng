@@ -56,19 +56,19 @@ export class AdminController {
   constructor(private readonly db: Database) {}
   @Get("dashboard") async dashboard() {
     const [assets] = await this.db.query(
-      "SELECT COUNT(*) total, COALESCE(SUM(archived = 0),0) active, COALESCE(SUM(archived = 0 AND saleMethod = 'Lelang' AND auctionDate >= NOW()),0) upcoming FROM assets",
+      "SELECT COUNT(*) total, COALESCE(SUM(archived = 0),0) active, COALESCE(SUM(archived = 0 AND saleMethod = 'Lelang' AND auctionDate >= NOW()),0) upcoming FROM assets WHERE deleted_at IS NULL",
     );
     const [interests] = await this.db.query(
-      "SELECT COUNT(*) total, COALESCE(SUM(status = 'baru'),0) pending, COALESCE(SUM(status = 'diproses'),0) processing, COALESCE(SUM(status = 'selesai'),0) completed FROM interests",
+      "SELECT COUNT(*) total, COALESCE(SUM(status = 'baru'),0) pending, COALESCE(SUM(status = 'diproses'),0) processing, COALESCE(SUM(status = 'selesai'),0) completed FROM interests WHERE deleted_at IS NULL",
     );
     const recent = await this.db.query(
-      "SELECT i.id,i.name,i.status,i.created_at,a.title asset_title FROM interests i JOIN assets a ON a.id = i.asset_id ORDER BY i.created_at DESC,i.id DESC LIMIT 5",
+      "SELECT i.id,i.name,i.status,i.created_at,a.title asset_title FROM interests i JOIN assets a ON a.id = i.asset_id WHERE i.deleted_at IS NULL ORDER BY i.created_at DESC,i.id DESC LIMIT 5",
     );
     return { assets, interests, recent };
   }
   @Get("assets") async assets() {
     return {
-      data: await this.db.query("SELECT * FROM assets ORDER BY id DESC"),
+      data: await this.db.query("SELECT * FROM assets WHERE deleted_at IS NULL ORDER BY id DESC"),
     };
   }
   @Post("assets/generate-code") async generateCode() {
@@ -80,7 +80,7 @@ export class AdminController {
     throw new ConflictException("Kode belum dapat dibuat. Silakan coba lagi.");
   }
   @Get("assets/:id") async asset(@Param("id", ParseIntPipe) id: number) {
-    const [row] = await this.db.query("SELECT * FROM assets WHERE id = ?", [
+    const [row] = await this.db.query("SELECT * FROM assets WHERE id = ? AND deleted_at IS NULL", [
       id,
     ]);
     if (!row) throw new NotFoundException("Aset tidak ditemukan.");
@@ -154,7 +154,7 @@ export class AdminController {
     body.village ??= parentChanged || body.district !== existing.district ? "" : existing.village;
     await this.checkCategory(body.category, body);
     await this.db.execute(
-      `UPDATE assets SET ${fields.map((key) => key + " = ?").join(",")} WHERE id = ?`,
+      `UPDATE assets SET ${fields.map((key) => key + " = ?").join(",")} WHERE id = ? AND deleted_at IS NULL`,
       [...this.values(body), id],
     );
     await this.savePhotos(id, body.photos || [body.image, ...existing.photos.filter((url: string) => url !== body.image)]);
@@ -171,14 +171,14 @@ export class AdminController {
     @Body() body: ArchiveDto,
   ) {
     await this.asset(id);
-    await this.db.execute("UPDATE assets SET archived = ? WHERE id = ?", [
+    await this.db.execute("UPDATE assets SET archived = ? WHERE id = ? AND deleted_at IS NULL", [
       body.archived,
       id,
     ]);
     return this.asset(id);
   }
   @Get("pengajuan") async interests(@Query() query: ListDto) {
-    const where: string[] = [];
+    const where: string[] = ["i.deleted_at IS NULL"];
     const values: (string | number)[] = [];
     if (query.q) {
       where.push(
@@ -197,7 +197,7 @@ export class AdminController {
       values,
     );
     const data = await this.db.query(
-      "SELECT i.*,a.title asset_title,a.code asset_code FROM interests i JOIN assets a ON a.id = i.asset_id" +
+      "SELECT i.*,a.title asset_title,a.code asset_code,a.deleted_at asset_deleted_at FROM interests i JOIN assets a ON a.id = i.asset_id" +
         clause +
         " ORDER BY i.created_at DESC,i.id DESC LIMIT 20 OFFSET " +
         (query.page - 1) * 20,
@@ -207,7 +207,7 @@ export class AdminController {
   }
   @Get("pengajuan/:id") async interest(@Param("id", ParseIntPipe) id: number) {
     const [row] = await this.db.query(
-      "SELECT i.*,a.title asset_title,a.code asset_code,a.price,a.city,a.slug FROM interests i JOIN assets a ON a.id = i.asset_id WHERE i.id = ?",
+      "SELECT i.*,a.title asset_title,a.code asset_code,a.price,a.city,a.slug,a.deleted_at asset_deleted_at FROM interests i JOIN assets a ON a.id = i.asset_id WHERE i.id = ? AND i.deleted_at IS NULL",
       [id],
     );
     if (!row) throw new NotFoundException("Pengajuan tidak ditemukan.");
@@ -249,7 +249,7 @@ export class AdminController {
       const [result] = await connection.execute<
         import("mysql2").ResultSetHeader
       >(
-        "UPDATE interests SET status=?,admin_notes=?,version=version+1 WHERE id=? AND version=?",
+        "UPDATE interests SET status=?,admin_notes=?,version=version+1 WHERE id=? AND version=? AND deleted_at IS NULL",
         [body.status, body.notes, id, body.version],
       );
       if (result.affectedRows !== 1)

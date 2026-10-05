@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
+  Trash2,
   Images,
   Tags,
   ChevronDown,
@@ -80,6 +81,7 @@ export function Sidebar({
           <Link href="/master-produk-kredit" onClick={onClose} className={pathname.startsWith("/master-produk-kredit") ? "active" : ""} aria-current={pathname.startsWith("/master-produk-kredit") ? "page" : undefined}><Landmark size={19} />Master Produk Kredit</Link>
           <Link href="/kelola-banner" onClick={onClose} className={pathname === "/kelola-banner" ? "active" : ""} aria-current={pathname === "/kelola-banner" ? "page" : undefined}><Images size={19} />Pengaturan Banner</Link>
           <Link href="/kelola-panduan" onClick={onClose} className={pathname === "/kelola-panduan" ? "active" : ""} aria-current={pathname === "/kelola-panduan" ? "page" : undefined}><BookOpen size={19} />Panduan Lelang</Link>
+          <Link href="/recycle-bin" onClick={onClose} className={pathname === "/recycle-bin" ? "active" : ""} aria-current={pathname === "/recycle-bin" ? "page" : undefined}><Trash2 size={19} />Recycle Bin</Link>
           <Link href="/log-user" onClick={onClose} className={pathname.startsWith("/log-user") ? "active" : ""} aria-current={pathname.startsWith("/log-user") ? "page" : undefined}><Activity size={19} />Log User</Link>
           <Link href="/manajemen-user" onClick={onClose} className={pathname.startsWith("/manajemen-user") ? "active" : ""} aria-current={pathname.startsWith("/manajemen-user") ? "page" : undefined}><Users size={19} />Manajemen User</Link>
         </div>

@@ -1,7 +1,7 @@
 import type ExcelJS from 'exceljs';
 import {randomUUID} from 'node:crypto';
 import {plainToInstance} from 'class-transformer';
-import {validate, type ValidationError} from 'class-validator';
+import {validate} from 'class-validator';
 import {AssetDto} from '../admin/admin.dto';
 import {AdminController} from '../admin/admin.controller';
 import type {Database} from '../database/database.service';
@@ -10,6 +10,7 @@ import {assetColumns,maxAssets,photoHeaders,type ImportIssue} from './schema';
 import {cellValue,decodePhoto,readWorkbook} from './read-workbook';
 import {flattenCategoryWorkbook} from './category-workbook';
 import type {MasterCategory} from './category-template-schema';
+import {assetValidationCorrections} from './validation-messages';
 
 type Photo = {order:number; url:string; buffer:Buffer};
 export type ParsedAsset = {row:number; sheet:string; asset:AssetDto; photos:Photo[]; values:(string|number|boolean|null)[]};
@@ -34,9 +35,6 @@ function date(value:unknown) {
   const parsed=new Date(wall+'Z');
   if(!Number.isFinite(parsed.getTime())||parsed.toISOString().slice(0,19)!==wall) throw new Error('Tanggal atau jam tidak valid.');
   return wall+'+07:00';
-}
-function validationMessages(errors:ValidationError[],prefix=''):string[] {
-  return errors.flatMap(error=>[...Object.values(error.constraints||{}).map(text=>`${prefix}${error.property}: ${text}`),...validationMessages(error.children||[],`${prefix}${error.property}.`)]);
 }
 export async function parseAssets(buffer:Buffer,db:Database) {
   let book=await readWorkbook(buffer);const issues:ImportIssue[]=[], rows:ParsedAsset[]=[];
@@ -149,7 +147,10 @@ export async function parseAssets(buffer:Buffer,db:Database) {
       input.image=images[0].url;input.photos=images.map(photo=>photo.url);
       const asset=plainToInstance(AssetDto,input);
       current='Validasi aset';const errors=await validate(asset,{whitelist:true,forbidNonWhitelisted:true});
-      if(errors.length) throw new Error(validationMessages(errors).join(' · '));
+      if(errors.length) {
+        for(const correction of assetValidationCorrections(errors,code,config))add('Data Aset',row,correction.field,correction.message);
+        continue;
+      }
       const values=await validator.validateAssetInput(asset);
       const exists=await db.query('SELECT id FROM assets WHERE code=? OR slug=? LIMIT 1',[code,asset.slug]);
       if(exists.length){current='Kode aset';throw new Error('Kode sudah ada di database. Impor hanya menambah aset baru.');}

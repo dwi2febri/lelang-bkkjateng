@@ -47,8 +47,14 @@ export function AssetExcelImport({onClose,onImported}:{onClose:()=>void;onImport
         <li>Sisipkan 1–12 gambar di kolom terakhir <strong>Foto aset</strong>, pada baris aset yang sama. Gunakan <strong>Insert → Pictures → Place over Cells</strong>; pojok kiri atas setiap gambar harus berada di dalam sel foto milik aset tersebut.</li>
         <li>Foto diurutkan dari atas ke bawah, lalu kiri ke kanan jika sejajar. Foto pertama menjadi sampul. Gunakan JPG/PNG, maksimal 5 MB per foto. Gambar dalam sel atau rumus IMAGE belum didukung.</li>
       </ol>
-      <label className="asset-excel-upload"><Upload size={24}/><strong>Pilih file Excel</strong><span>.xlsx · Maksimal 20 MB · Foto tertanam dalam file</span><input aria-label="File Excel aset" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={busy} onChange={event=>choose(event.target.files?.[0]||null)}/></label>
-      {file&&<p className="asset-excel-filename">{file.name} · {(file.size/1024/1024).toFixed(2)} MB</p>}
+      <label className="asset-excel-upload" data-disabled={busy}>
+        <span className="asset-excel-upload-icon" aria-hidden="true"><Upload size={26}/></span>
+        <strong>{file?'Ganti file Excel':'Pilih file Excel'}</strong>
+        <span>Klik area ini untuk memilih file .xlsx</span>
+        <small>Maksimal 20 MB · Foto tertanam dalam file</small>
+        {file&&<span className="asset-excel-selected" role="status"><FileSpreadsheet size={20} aria-hidden="true"/><span className="asset-excel-filename">{file.name}<small>{(file.size/1024/1024).toFixed(2)} MB</small></span></span>}
+        <input aria-label={file?`Ganti file Excel, saat ini ${file.name}`:'Pilih file Excel aset'} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" disabled={busy} onChange={event=>{const selected=event.target.files?.[0];if(selected)choose(selected);event.target.value='';}}/>
+      </label>
       <p className="admin-helper">Impor menambah aset baru. Kode yang sudah ada ditolak. Jika ada kesalahan, seluruh impor dibatalkan. Aset yang berhasil diimpor langsung tampil pada katalog publik.</p>
       {error&&<p className="admin-alert error" role="alert">{error}</p>}
       {success&&<p className="asset-excel-success" role="status">{success}</p>}

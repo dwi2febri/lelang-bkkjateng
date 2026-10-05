@@ -1,4 +1,4 @@
-import {Body, Controller, Get, Post, Put, Param, UseGuards, Header, BadRequestException, ConflictException} from "@nestjs/common";
+import {Body, Controller, Delete, Get, Post, Put, Param, UseGuards, Header, BadRequestException, ConflictException, NotFoundException} from "@nestjs/common";
 import {IsString, Length, Matches, IsIn, IsBoolean, IsInt, Min, Max, IsOptional, IsObject} from "class-validator";
 import {CategorySettings, getCategorySettings, validateCategorySettings} from "./category-settings";
 import {Database} from "./database/database.service";
@@ -17,9 +17,24 @@ class CreateCategoryDto extends CategoryDto {
 @Controller("api")
 export class CategoriesController {
  constructor(private readonly db: Database) {}
+ @Get("admin/categories") @UseGuards(AdminGuard) async adminList() {
+  const rows=await this.list();
+  const counts=await this.db.query('SELECT category,COUNT(*) total FROM assets GROUP BY category');
+  return rows.map(row=>({...row,assetCount:Number(counts.find(count=>count.category===row.name)?.total||0)}));
+ }
+ @Delete("admin/categories/:name") @UseGuards(AdminGuard) async remove(@Param("name") name:string) {
+  try {
+   const [result]=await this.db.pool.execute<import('mysql2').ResultSetHeader>('DELETE FROM asset_categories WHERE name=?',[name]);
+   if (!result.affectedRows) throw new NotFoundException('Kategori tidak ditemukan.');
+   return {message:'Kategori berhasil dihapus.'};
+  } catch(error) {
+   if ((error as {code?:string}).code==='ER_ROW_IS_REFERENCED_2') throw new ConflictException('Kategori masih digunakan oleh aset, termasuk aset yang diarsipkan atau berada di Recycle Bin. Kategori tidak dapat dihapus.');
+   throw error;
+  }
+ }
  @Get("categories") @Header("Cache-Control","no-store") async list() {
   const rows=await this.db.query("SELECT * FROM asset_categories ORDER BY sortOrder,name");
-  return rows.map(row=>({...row,showHome:!!row.showHome,settings:getCategorySettings(row.name,typeof row.settings==="string"?JSON.parse(row.settings):row.settings)}));
+  return rows.map(row=>({...row,name:String(row.name),showHome:!!row.showHome,settings:getCategorySettings(row.name,typeof row.settings==="string"?JSON.parse(row.settings):row.settings)}));
  }
  @Post("admin/categories") @UseGuards(AdminGuard) async create(@Body() body:CreateCategoryDto) {
   if(body.name.toLowerCase()==="semua") throw new BadRequestException("Nama ini digunakan untuk semua kategori.");

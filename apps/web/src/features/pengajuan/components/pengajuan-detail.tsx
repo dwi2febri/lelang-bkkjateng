@@ -114,9 +114,9 @@ export function PengajuanDetail({ id }: { id: string }) {
                 <strong>{currency(interest.price || 0)}</strong>
               </div>
             </div>
-            <Link href={`/aset/${interest.asset_id}`} className="table-action">
+            {interest.asset_deleted_at?<p className="admin-helper">Aset berada di Recycle Bin. <Link href="/recycle-bin">Pulihkan aset</Link> agar kembali tersedia di portal dan chat.</p>:<Link href={`/aset/${interest.asset_id}`} className="table-action">
               Lihat informasi aset →
-            </Link>
+            </Link>}
           </section>
           <section className="admin-panel padded">
             <h2>Riwayat tindak lanjut</h2>
@@ -140,7 +140,7 @@ export function PengajuanDetail({ id }: { id: string }) {
               <p className="admin-helper">Belum ada perubahan status.</p>
             )}
           </section>
-          {interest.public_user_id && (interest.status === "diproses" || interest.history?.some(item => item.status === "diproses")) && <section className="admin-panel padded"><InterestChat interestId={interest.id} role="admin" /></section>}
+          {!interest.asset_deleted_at && interest.public_user_id && (interest.status === "diproses" || interest.history?.some(item => item.status === "diproses")) && <section className="admin-panel padded"><InterestChat interestId={interest.id} role="admin" /></section>}
         </div>
         <section className="admin-panel padded sticky-panel searchable-form-panel">
           <h2>Tindak lanjut</h2>

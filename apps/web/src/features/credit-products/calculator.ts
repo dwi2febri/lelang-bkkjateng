@@ -1,5 +1,5 @@
 export type CreditRule = {audience:"all"|"internal"|"external";minMonths:number;maxMonths:number|null;flatRate:number|null;annuityRate:number|null};
-export type CreditProduct = {id:number;code:string;name:string;description:string;active:boolean;requiresEmployee:boolean;rules:CreditRule[];version:number};
+export type CreditProduct = {used_at?:string|null;id:number;code:string;name:string;description:string;active:boolean;requiresEmployee:boolean;rules:CreditRule[];version:number};
 export type CreditMethod = "flat"|"anuitas";
 export function creditTerms(product:CreditProduct,months:number,requested:CreditMethod,audience="external") {
   if(!Number.isInteger(months)||months<1||months>1200)return null;

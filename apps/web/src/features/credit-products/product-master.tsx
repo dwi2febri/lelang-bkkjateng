@@ -1,4 +1,6 @@
 "use client";
+import {DeleteAction} from "@/components/ui/delete-action";
+
 import {useEffect,useRef,useState} from 'react';
 import {Plus,Save,Pencil,Landmark,X} from 'lucide-react';
 import {api,errorMessage} from '@/services/api';
@@ -21,7 +23,8 @@ export function ProductMaster(){
   rules.push({audience,minMonths:last?(last.maxMonths||0)+1:1,maxMonths:null,flatRate:0,annuityRate:null});patch({rules});
  }
  async function save(event:React.FormEvent){event.preventDefault();if(!draft||busy)return;setBusy(true);setError('');try{
-  const {id,...payload}=draft;
+  const {id,code,name,description,requiresEmployee,active,version,rules}=draft;
+  const payload={code,name,description,requiresEmployee,active,version,rules};
   if(id)await api.put(`/admin/credit-products/${id}`,payload);else await api.post('/admin/credit-products',payload);
   setDraft(null);setNotice('Produk kredit berhasil disimpan.');setRetry(value=>value+1);
  }catch(err){setError(errorMessage(err));}finally{setBusy(false);}}
@@ -29,7 +32,7 @@ export function ProductMaster(){
   <div className="admin-page-heading"><div><span className="admin-eyebrow">PENGATURAN PEMBIAYAAN</span><h1>Master Produk Kredit</h1><p>Atur produk, metode bunga, dan rentang tenor untuk simulasi aset.</p></div><Button disabled={busy} onClick={()=>{setDraft(structuredClone(empty));setError('');setNotice('');}}><Plus size={17}/>Tambah produk</Button></div>
   {notice&&<div className="admin-alert" role="status">{notice}</div>}
   {error&&<div className="admin-alert error" role="alert">{error} <button type="button" onClick={()=>setRetry(value=>value+1)}>Muat ulang daftar</button></div>}
-  {loading?<p>Memuat produk kredit…</p>:<div className="credit-product-list">{products.map(product=><article className="admin-panel padded" key={product.id}><div className="credit-product-title"><Landmark size={22}/><h2>{product.name}</h2><span>{product.active?'Aktif':'Nonaktif'}</span></div><p>{product.description||'Bunga per tahun mengikuti tenor dan metode.'}</p><ul>{product.rules.map((r,i)=><li key={i}>{product.requiresEmployee?`${audienceName[r.audience]} · `:''}{r.minMonths}–{r.maxMonths??'seterusnya'} bulan: {r.flatRate!==null?`Flat ${r.flatRate}%`:''}{r.flatRate!==null&&r.annuityRate!==null?' / ':''}{r.annuityRate!==null?`Anuitas ${r.annuityRate}%`:''}</li>)}</ul><Button variant="secondary" disabled={busy} onClick={()=>{setDraft(structuredClone(product));setError('');setNotice('');}}><Pencil size={15}/>Edit produk</Button></article>)}</div>}
+  {loading?<p>Memuat produk kredit…</p>:<div className="credit-product-list">{products.map(product=><article className="admin-panel padded" key={product.id}><div className="credit-product-title"><Landmark size={22}/><h2>{product.name}</h2><span>{product.active?'Aktif':'Nonaktif'}</span></div><p>{product.description||'Bunga per tahun mengikuti tenor dan metode.'}</p><ul>{product.rules.map((r,i)=><li key={i}>{product.requiresEmployee?`${audienceName[r.audience]} · `:''}{r.minMonths}–{r.maxMonths??'seterusnya'} bulan: {r.flatRate!==null?`Flat ${r.flatRate}%`:''}{r.flatRate!==null&&r.annuityRate!==null?' / ':''}{r.annuityRate!==null?`Anuitas ${r.annuityRate}%`:''}</li>)}</ul><div className="record-actions"><Button variant="secondary" disabled={busy} onClick={()=>{setDraft(structuredClone(product));setError('');setNotice('');}}><Pencil size={15}/>Edit produk</Button><DeleteAction name={product.name} endpoint={`/admin/credit-products/${product.id}`} disabledReason={product.used_at?"Produk sudah pernah digunakan pada aset.":busy?"Tunggu penyimpanan selesai.":undefined} onDeleted={()=>{if(draft?.id===product.id)setDraft(null);setRetry(value=>value+1);}}/></div>{product.used_at&&<p className="delete-reason">Sudah pernah digunakan pada aset; tidak dapat dihapus. Anda tetap dapat menonaktifkan produk melalui Edit produk.</p>}</article>)}</div>}
   {draft&&<form ref={editor} onSubmit={save} className="admin-panel padded credit-product-editor">
    <div className="credit-product-title"><h2>{draft.id?'Edit produk kredit':'Tambah produk kredit'}</h2><Button aria-label="Tutup editor produk" variant="secondary" disabled={busy} onClick={()=>setDraft(null)}><X size={17}/></Button></div>
    <fieldset disabled={busy} className="credit-editor-fields">

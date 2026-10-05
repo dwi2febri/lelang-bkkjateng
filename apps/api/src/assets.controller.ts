@@ -114,7 +114,7 @@ export class AssetsController {
       throw new BadRequestException(
         "Tanggal awal tidak boleh melewati tanggal akhir.",
       );
-    const where: string[] = ["archived = 0"];
+    const where: string[] = ["archived = 0", "deleted_at IS NULL"];
     const values: (string | number)[] = [];
     if (query.saleMethod) {
       where.push("saleMethod = ?");
@@ -188,13 +188,13 @@ export class AssetsController {
   }
   @Get("asset-locations") async locations() {
     const data = await this.db.query(
-      "SELECT DISTINCT province, city, district FROM assets WHERE archived = 0 ORDER BY province, city, district",
+      "SELECT DISTINCT province, city, district FROM assets WHERE deleted_at IS NULL AND archived = 0 ORDER BY province, city, district",
     );
     return { data };
   }
   @Get("assets/:slug") async detail(@Param("slug") slug: string) {
     const rows = await this.db.query(
-      "SELECT * FROM assets WHERE slug = ? AND archived = 0",
+      "SELECT * FROM assets WHERE slug = ? AND archived = 0 AND deleted_at IS NULL",
       [slug],
     );
     if (!rows.length) throw new NotFoundException("Aset tidak ditemukan");
@@ -203,7 +203,7 @@ export class AssetsController {
       [rows[0].id],
     );
     const [stats] = await this.db.query(
-      "SELECT (SELECT COUNT(*) FROM asset_views WHERE asset_id = ?) viewCount, (SELECT COUNT(*) FROM interests WHERE asset_id = ?) interestCount",
+      "SELECT (SELECT COUNT(*) FROM asset_views WHERE asset_id = ?) viewCount, (SELECT COUNT(*) FROM interests WHERE asset_id = ? AND deleted_at IS NULL) interestCount",
       [rows[0].id, rows[0].id],
     );
     const [product] = rows[0].creditProductId ? await this.db.query("SELECT * FROM credit_products WHERE id=?",[rows[0].creditProductId]) : [];
@@ -226,7 +226,7 @@ export class AssetsController {
     @Body() body: ViewDto,
   ) {
     const rows = await this.db.query(
-      "SELECT id FROM assets WHERE slug = ? AND archived = 0",
+      "SELECT id FROM assets WHERE slug = ? AND archived = 0 AND deleted_at IS NULL",
       [slug],
     );
     if (!rows.length) throw new NotFoundException("Aset tidak ditemukan");
@@ -245,7 +245,7 @@ export class AssetsController {
   async interestStatus(@Param("slug") slug: string, @Req() req: Request) {
     const user = await this.account.user(req);
     const rows = await this.db.query(
-      "SELECT i.id FROM interests i JOIN assets a ON a.id=i.asset_id WHERE a.slug=? AND (i.public_user_id=? OR (i.public_user_id IS NULL AND LOWER(TRIM(i.email))=?)) LIMIT 1",
+      "SELECT i.id FROM interests i JOIN assets a ON a.id=i.asset_id WHERE a.slug=? AND a.deleted_at IS NULL AND (i.public_user_id=? OR (i.public_user_id IS NULL AND LOWER(TRIM(i.email))=?)) LIMIT 1",
       [slug, user.id, user.email.toLowerCase()],
     );
     return { submitted: rows.length > 0 };
@@ -264,7 +264,8 @@ export class AssetsController {
     try {
       await connection.beginTransaction();
       // Serialize submissions for this asset, including requests from separate tabs.
-      await connection.execute("SELECT id FROM assets WHERE id=? FOR UPDATE", [asset.id]);
+      const [available] = await connection.execute<import("mysql2").RowDataPacket[]>("SELECT id FROM assets WHERE id=? AND deleted_at IS NULL AND archived=0 FOR UPDATE", [asset.id]);
+      if (!available.length) throw new NotFoundException("Aset tidak tersedia.");
       const [existing] = await connection.execute<RowDataPacket[]>(
         "SELECT id FROM interests WHERE asset_id=? AND (public_user_id=? OR LOWER(TRIM(email))=?) LIMIT 1 FOR UPDATE",
         [asset.id, user?.id || null, applicant.email.toLowerCase()],

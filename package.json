@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently -n WEB,API -c cyan,yellow \"npm run dev -w apps/web\" \"npm run dev -w apps/api\"",
     "build": "npm run build -w apps/api && npm run build -w apps/web",
-    "db:setup": "node scripts/setup-db.mjs && node scripts/setup-auction-date.mjs && node scripts/setup-admin.mjs && node scripts/setup-public-accounts.mjs && node scripts/setup-interest-chat.mjs && node scripts/seed-sales-demo.mjs && node scripts/setup-gallery.mjs && node scripts/setup-asset-details.mjs && node scripts/setup-guide.mjs && node scripts/setup-visitors.mjs && node scripts/setup-banners.mjs && node scripts/setup-categories.mjs && node scripts/setup-category-settings.mjs && node scripts/setup-provinces.mjs && node scripts/setup-user-presence.mjs && node scripts/setup-credit-products.mjs",
+    "db:setup": "node scripts/setup-db.mjs && node scripts/setup-auction-date.mjs && node scripts/setup-admin.mjs && node scripts/setup-public-accounts.mjs && node scripts/setup-interest-chat.mjs && node scripts/seed-sales-demo.mjs && node scripts/setup-gallery.mjs && node scripts/setup-asset-details.mjs && node scripts/setup-guide.mjs && node scripts/setup-visitors.mjs && node scripts/setup-banners.mjs && node scripts/setup-categories.mjs && node scripts/setup-category-settings.mjs && node scripts/setup-provinces.mjs && node scripts/setup-user-presence.mjs && node scripts/setup-credit-products.mjs && node scripts/setup-recycle-bin.mjs",
     "db:credit-products": "node scripts/setup-credit-products.mjs",
     "db:demo-credit-products": "node scripts/assign-demo-credit-products.mjs",
     "db:user-logs": "node scripts/setup-user-presence.mjs",
@@ -23,7 +23,8 @@
     "db:visitors": "node scripts/setup-visitors.mjs",
     "db:banners": "node scripts/setup-banners.mjs",
     "db:categories": "node scripts/setup-categories.mjs && node scripts/setup-category-settings.mjs",
-    "db:provinces": "node scripts/setup-provinces.mjs"
+    "db:provinces": "node scripts/setup-provinces.mjs",
+    "db:recycle-bin": "node scripts/setup-recycle-bin.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.1",

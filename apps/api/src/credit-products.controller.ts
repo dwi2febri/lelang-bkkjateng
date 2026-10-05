@@ -1,4 +1,4 @@
-import {BadRequestException,Body,ConflictException,Controller,Get,NotFoundException,Param,ParseIntPipe,Post,Put,UseGuards} from '@nestjs/common';
+import {BadRequestException,Body,ConflictException,Controller,Delete,Get,NotFoundException,Param,ParseIntPipe,Post,Put,UseGuards} from '@nestjs/common';
 import {ArrayMaxSize,ArrayMinSize,IsArray,IsBoolean,IsIn,IsInt,IsNumber,IsOptional,IsString,Length,Matches,Max,Min,ValidateNested} from 'class-validator';
 import {Type} from 'class-transformer';
 import {Database} from './database/database.service';
@@ -40,6 +40,21 @@ function validate(product: CreditProductDto) {
 @Controller('api')
 export class CreditProductsController {
  constructor(private readonly db:Database) {}
+ @Delete('admin/credit-products/:id') @UseGuards(AdminGuard)
+ async remove(@Param('id',ParseIntPipe) id:number) {
+   try {
+     const [result]=await this.db.pool.execute<import('mysql2').ResultSetHeader>('DELETE FROM credit_products WHERE id=? AND used_at IS NULL',[id]);
+     if (!result.affectedRows) {
+       const [row]=await this.db.query('SELECT id FROM credit_products WHERE id=?',[id]);
+       if (!row) throw new NotFoundException('Produk kredit tidak ditemukan.');
+       throw new ConflictException('Produk kredit sudah pernah digunakan pada aset sehingga tidak dapat dihapus. Anda dapat menonaktifkannya melalui Edit produk.');
+     }
+     return {message:'Produk kredit berhasil dihapus.'};
+   } catch(error) {
+     if ((error as {code?:string}).code==='ER_ROW_IS_REFERENCED_2') throw new ConflictException('Produk kredit masih digunakan pada aset sehingga tidak dapat dihapus.');
+     throw error;
+   }
+ }
  @Get('admin/credit-products') @UseGuards(AdminGuard)
  async list() {return (await this.db.query('SELECT * FROM credit_products ORDER BY id')).map(creditProduct);}
  @Post('admin/credit-products') @UseGuards(AdminGuard)

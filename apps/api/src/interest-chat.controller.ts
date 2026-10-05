@@ -20,7 +20,7 @@ export class InterestChatController {
   }
   private async interest(id: number, userId?: number) {
     const [interest] = await this.db.query(
-      `SELECT id,status,public_user_id FROM interests WHERE id=? ${userId === undefined ? "" : "AND public_user_id=?"}`,
+      `SELECT i.id,i.status,i.public_user_id FROM interests i JOIN assets a ON a.id=i.asset_id WHERE i.id=? AND i.deleted_at IS NULL AND a.deleted_at IS NULL ${userId === undefined ? "" : "AND i.public_user_id=?"}`,
       userId === undefined ? [id] : [id, userId],
     );
     if (!interest) throw new NotFoundException("Pengajuan tidak ditemukan.");
@@ -39,7 +39,7 @@ export class InterestChatController {
     try {
       await connection.beginTransaction();
       const [rows] = await connection.execute<import("mysql2").RowDataPacket[]>(
-        `SELECT id,status,public_user_id FROM interests WHERE id=? ${userId === undefined ? "" : "AND public_user_id=?"} FOR UPDATE`,
+        `SELECT i.id,i.status,i.public_user_id FROM interests i JOIN assets a ON a.id=i.asset_id WHERE i.id=? AND i.deleted_at IS NULL AND a.deleted_at IS NULL ${userId === undefined ? "" : "AND i.public_user_id=?"} FOR UPDATE`,
         userId === undefined ? [id] : [id, userId],
       );
       const interest = rows[0];

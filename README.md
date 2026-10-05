@@ -20,6 +20,14 @@ Buka http://localhost:3000. API tersedia pada http://127.0.0.1:3001/api/health. 
 
 ## Login admin
 
+Untuk memasang fitur Recycle Bin pada database yang sudah ada, jalankan `npm.cmd run db:recycle-bin`, lalu build/restart API dan web. Pada server Linux gunakan `npm run db:recycle-bin`. Migrasi ini juga termasuk dalam `db:setup` untuk instalasi baru.
+
+- Hapus aset/pengajuan memindahkan data ke `/recycle-bin`; tombol Pulihkan mengembalikannya beserta riwayat dan chat. Tidak ada penghapusan permanen aset/pengajuan atau pengosongan otomatis.
+- Aset yang dihapus tidak tampil di katalog, favorit, dan riwayat publik. Pengajuan terkait tetap tersedia bagi admin, tetapi chat ditutup sampai aset dipulihkan. Pengajuan yang dihapus terpisah harus dipulihkan terpisah, setelah asetnya dipulihkan.
+- Kategori hanya dapat dihapus jika tidak memiliki aset, termasuk aset arsip dan Recycle Bin. Produk kredit hanya dapat dihapus jika belum pernah digunakan. Penghapusan kedua master ini bersifat permanen dan meminta konfirmasi di aplikasi.
+- Migrasi mencatat produk yang sedang terhubung dengan aset. Trigger database mencatat pemakaian berikutnya, termasuk impor Excel; jejak tetap ada setelah produk dilepas dari aset. Riwayat pemakaian sebelum migrasi yang sudah dilepas tidak tersedia pada skema lama, sehingga tidak dapat direkonstruksi.
+- Akun database untuk migrasi perlu izin ALTER dan TRIGGER. Jalankan `db:recycle-bin` untuk pembaruan ini; menjalankan seluruh `db:setup` juga menjalankan seed master bawaan.
+
 Buka http://localhost:3000/login atau klik **Login Admin** pada portal publik. `/admin` mengarah ke `/dashboard`.
 
 - Email awal: `admin@bkkjateng.local`, kecuali Anda mengatur `ADMIN_EMAIL` sendiri.

@@ -206,10 +206,10 @@ export class PublicAccountService {
   }
   async history(req: Request) {
     const user = await this.user(req);
-    const rows = await this.db.query("SELECT i.id,a.slug,a.code assetCode,a.title assetTitle,i.created_at sentAt,i.status FROM interests i JOIN assets a ON a.id=i.asset_id WHERE i.public_user_id=? ORDER BY i.created_at DESC,i.id DESC LIMIT 200", [user.id]);
+    const rows = await this.db.query("SELECT i.id,a.slug,a.code assetCode,a.title assetTitle,i.created_at sentAt,i.status FROM interests i JOIN assets a ON a.id=i.asset_id WHERE i.public_user_id=? AND i.deleted_at IS NULL AND a.deleted_at IS NULL ORDER BY i.created_at DESC,i.id DESC LIMIT 200", [user.id]);
     if (!rows.length) return rows;
-    const changes = await this.db.query("SELECT h.id,h.interest_id interestId,h.status,h.created_at changedAt FROM interest_history h JOIN interests i ON i.id=h.interest_id WHERE i.public_user_id=? ORDER BY h.id ASC LIMIT 5000", [user.id]);
-    const unread = await this.db.query("SELECT m.interest_id interestId,COUNT(*) unreadCount FROM interest_messages m JOIN interests i ON i.id=m.interest_id LEFT JOIN interest_chat_reads r ON r.interest_id=i.id AND r.public_user_id=i.public_user_id WHERE i.public_user_id=? AND m.sender_role='admin' AND m.id>COALESCE(r.last_read_message_id,0) GROUP BY m.interest_id", [user.id]);
+    const changes = await this.db.query("SELECT h.id,h.interest_id interestId,h.status,h.created_at changedAt FROM interest_history h JOIN interests i ON i.id=h.interest_id JOIN assets a ON a.id=i.asset_id WHERE i.public_user_id=? AND i.deleted_at IS NULL AND a.deleted_at IS NULL ORDER BY h.id ASC LIMIT 5000", [user.id]);
+    const unread = await this.db.query("SELECT m.interest_id interestId,COUNT(*) unreadCount FROM interest_messages m JOIN interests i ON i.id=m.interest_id JOIN assets a ON a.id=i.asset_id LEFT JOIN interest_chat_reads r ON r.interest_id=i.id AND r.public_user_id=i.public_user_id WHERE i.public_user_id=? AND i.deleted_at IS NULL AND a.deleted_at IS NULL AND m.sender_role='admin' AND m.id>COALESCE(r.last_read_message_id,0) GROUP BY m.interest_id", [user.id]);
     const unreadByInterest = new Map(unread.map(row => [row.interestId as number, Number(row.unreadCount)]));
     const byInterest = new Map<number, typeof changes>();
     for (const change of changes) {
@@ -221,19 +221,19 @@ export class PublicAccountService {
   }
   async favorites(req: Request) {
     const user = await this.user(req);
-    const rows = await this.db.query("SELECT f.asset_id id FROM public_favorites f JOIN assets a ON a.id=f.asset_id AND a.archived=0 WHERE f.user_id=?", [user.id]);
+    const rows = await this.db.query("SELECT f.asset_id id FROM public_favorites f JOIN assets a ON a.id=f.asset_id AND a.archived=0 AND a.deleted_at IS NULL WHERE f.user_id=?", [user.id]);
     return rows.map(row => row.id as number);
   }
   async syncFavorites(req: Request, ids: number[]) {
     this.checkMutation(req);
     const user = await this.user(req);
-    for (const id of [...new Set(ids)]) await this.db.execute("INSERT IGNORE INTO public_favorites(user_id,asset_id) SELECT ?,id FROM assets WHERE id=? AND archived=0", [user.id, id]);
+    for (const id of [...new Set(ids)]) await this.db.execute("INSERT IGNORE INTO public_favorites(user_id,asset_id) SELECT ?,id FROM assets WHERE id=? AND archived=0 AND deleted_at IS NULL", [user.id, id]);
     return this.favorites(req);
   }
   async setFavorite(req: Request, id: number, favorite: boolean) {
     this.checkMutation(req);
     const user = await this.user(req);
-    if (favorite) await this.db.execute("INSERT IGNORE INTO public_favorites(user_id,asset_id) SELECT ?,id FROM assets WHERE id=? AND archived=0", [user.id, id]);
+    if (favorite) await this.db.execute("INSERT IGNORE INTO public_favorites(user_id,asset_id) SELECT ?,id FROM assets WHERE id=? AND archived=0 AND deleted_at IS NULL", [user.id, id]);
     else await this.db.execute("DELETE FROM public_favorites WHERE user_id=? AND asset_id=?", [user.id, id]);
     return this.favorites(req);
   }

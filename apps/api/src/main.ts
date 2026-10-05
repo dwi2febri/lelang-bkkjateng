@@ -1,3 +1,4 @@
+import { RecycleBinController } from "./admin/recycle-bin.controller";
 import { CreditProductsController } from "./credit-products.controller";
 import { AssetImportController } from "./asset-import.controller";
 import { CategoriesController } from "./categories.controller";
@@ -24,6 +25,7 @@ import { InterestChatController } from "./interest-chat.controller";
 config({ path: resolve(__dirname, "../../../.env"), quiet: true });
 @Module({
   controllers: [
+    RecycleBinController,
     AssetImportController,
     CreditProductsController,
     PresenceController,

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-const internal = ["/dashboard","/aset","/pengajuan","/approval","/master-kategori","/master-produk-kredit","/kelola-banner","/kelola-panduan","/manajemen-user","/log-user"];
+const internal = ["/recycle-bin","/dashboard","/aset","/pengajuan","/approval","/master-kategori","/master-produk-kredit","/kelola-banner","/kelola-panduan","/manajemen-user","/log-user"];
 export function PresenceTracker() {
   const path = usePathname();
   useEffect(() => {

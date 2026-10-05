@@ -1,4 +1,6 @@
 "use client";
+import {DeleteAction} from "@/components/ui/delete-action";
+
 import { useRegions } from "../use-regions";
 import { matchesAsset } from "../filters";
 import { assetPage } from "../pagination";
@@ -221,6 +223,7 @@ export function AsetList() {
                             <Archive size={16} />
                           )}
                         </button>
+                        <DeleteAction name={a.title} endpoint={`/admin/assets/${a.id}`} recycle iconOnly description="Aset akan disembunyikan dari katalog publik. Riwayat pengajuan tetap disimpan; akses publik dan chat tersedia kembali setelah aset dipulihkan." onDeleted={()=>setAssets(rows=>rows.filter(row=>row.id!==a.id))}/>
                       </div>
                     </td>
                   </tr>

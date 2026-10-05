@@ -39,7 +39,7 @@ export class UsersController {
     const where = " WHERE (u.name LIKE ? OR u.email LIKE ?)";
     const values = [`%${query.q}%`, `%${query.q}%`];
     const [count] = await this.db.query(`SELECT COUNT(*) total FROM ${table} u${where}`, values);
-    const data = await this.db.query(`SELECT u.id,u.name,u.email,u.active,u.created_at,${internal ? "u.role" : "u.phone,(SELECT COUNT(*) FROM interests i WHERE i.public_user_id=u.id) submissionCount"} FROM ${table} u${where} ORDER BY u.id DESC LIMIT 20 OFFSET ${(query.page - 1) * 20}`, values);
+    const data = await this.db.query(`SELECT u.id,u.name,u.email,u.active,u.created_at,${internal ? "u.role" : "u.phone,(SELECT COUNT(*) FROM interests i WHERE i.public_user_id=u.id AND i.deleted_at IS NULL) submissionCount"} FROM ${table} u${where} ORDER BY u.id DESC LIMIT 20 OFFSET ${(query.page - 1) * 20}`, values);
     return { data, total: count.total };
   }
   @Post("internal") async create(@Body() body: CreateInternal) {

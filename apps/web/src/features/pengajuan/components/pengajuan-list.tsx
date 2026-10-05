@@ -1,4 +1,6 @@
 "use client";
+import {DeleteAction} from "@/components/ui/delete-action";
+
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -105,7 +107,7 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
                   <th>Aset diminati</th>
                   <th>Tanggal masuk</th>
                   <th>Status</th>
-                  <th />
+                  <th>Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,7 +132,7 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
                       </span>
                     </td>
                     <td>
-                      <strong>{item.asset_title}</strong>
+                      <strong>{item.asset_title}</strong>{item.asset_deleted_at&&<small className="delete-reason">Aset berada di Recycle Bin</small>}
                       <small>
                         {item.asset_code} · #{item.id}
                       </small>
@@ -140,12 +142,15 @@ export function PengajuanList({ approval = false }: { approval?: boolean }) {
                       <StatusBadge status={item.status} />
                     </td>
                     <td>
+                      <div className="record-actions">
                       <Link
                         className="table-action"
                         href={`/pengajuan/${item.id}`}
                       >
                         Detail <ArrowUpRight size={15} />
                       </Link>
+                      <DeleteAction name={`Pengajuan ${item.name} untuk ${item.asset_title}`} endpoint={`/admin/pengajuan/${item.id}`} recycle iconOnly description="Pengajuan dan chat akan disembunyikan dari pengguna sampai pengajuan dipulihkan." onDeleted={()=>{if(result.data.length===1&&page>1)setPage(page-1);else reload();}}/>
+                      </div>
                     </td>
                   </tr>
                 ))}

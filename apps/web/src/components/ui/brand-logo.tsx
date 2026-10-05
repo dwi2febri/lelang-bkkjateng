@@ -5,8 +5,8 @@ export function BrandLogo({ variant = "bordered" }: { variant?: "original" | "bo
     <Image
       src={variant === "original" ? "/logo/bkk-lelang-v2.png" : "/logo/bkk-lelang-bordered.png"}
       alt="BKK Jawa Tengah — Lelang & Katalog Aset"
-      width={2172}
-      height={724}
+      width={270}
+      height={90}
       sizes="(max-width: 560px) 190px, 270px"
       className="brand-logo"
     />

@@ -1,0 +1,8 @@
+Self-hosted Google Fonts, downloaded 2026-10-05.
+SIL Open Font License 1.1; see included OFL files.
+CSS source: https://fonts.googleapis.com/css2?family=DM+Sans:wght@400..700&family=Manrope:wght@400..800&display=swap
+
+dm-sans-latin-ext-v1.woff2 <- https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu6-K6h9Q.woff2
+dm-sans-latin-v1.woff2 <- https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2
+manrope-latin-ext-v1.woff2 <- https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggmxSuXd.woff2
+manrope-latin-v1.woff2 <- https://fonts.gstatic.com/s/manrope/v20/xn7gYHE41ni1AdIRggexSg.woff2

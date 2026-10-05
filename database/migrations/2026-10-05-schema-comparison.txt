@@ -1,0 +1,85 @@
+PERBANDINGAN STRUKTUR DATABASE - 5 Oktober 2026
+
+Sumber production: sql_lelang_bkkjateng.sql (MySQL 8.0.36), bukan koneksi langsung server production.
+Database pembanding: lelang_bkkjateng lokal (MySQL 8.4.3).
+Tabel: 23 production dan 23 lokal. Tidak ada tabel yang kurang.
+
+Perbedaan terverifikasi sebelum migrasi:
+{
+  "tables": {
+    "missing": [],
+    "extra": [],
+    "changed": []
+  },
+  "columns": {
+    "missing": [
+      "assets.deleted_at",
+      "credit_products.used_at",
+      "interests.deleted_at"
+    ],
+    "extra": [],
+    "changed": []
+  },
+  "indexes": {
+    "missing": [
+      "assets.assets_category_fk.1",
+      "assets.assets_deleted_at.1",
+      "interests.interests_deleted_at.1"
+    ],
+    "extra": [],
+    "changed": []
+  },
+  "foreignKeys": {
+    "missing": [
+      "assets.assets_category_fk.1"
+    ],
+    "extra": [],
+    "changed": []
+  },
+  "triggers": {
+    "missing": [
+      "assets_credit_usage_insert",
+      "assets_credit_usage_update"
+    ],
+    "extra": [],
+    "changed": []
+  }
+}
+
+Arti perubahan:
+- assets.deleted_at: penanda aset di Recycle Bin.
+- interests.deleted_at: penanda pengajuan di Recycle Bin.
+- credit_products.used_at: penanda produk pernah terhubung ke aset.
+- assets_deleted_at dan interests_deleted_at: index penanda penghapusan.
+- assets_category_fk: relasi kategori dan index pendukung otomatis.
+- assets_credit_usage_insert/update: mencatat pemakaian produk dari tambah/edit/import aset.
+
+Kolom lama, tipe, nullability, default, collation, primary/unique key, dan FK lainnya sama setelah dinormalisasi oleh MySQL.
+Perbedaan nilai AUTO_INCREMENT diabaikan karena mengikuti data masing-masing server; tidak perlu disamakan.
+Data bisnis dan akun tidak dibandingkan, tidak disalin, dan tidak ditimpa.
+
+CARA MENJALANKAN DI AAPANEL / PHPMYADMIN:
+1. Backup database production dan hentikan sementara penulisan aplikasi.
+2. Pilih database sql_lelang_bkkjateng. Jalankan 2026-10-05-production-precheck.sql pada tab SQL.
+3. Query kategori_tidak_terdaftar harus kosong. Jika ada baris, perbaiki kategori aset melalui aplikasi terlebih dahulu.
+4. Import 2026-10-05-production-update.sql melalui tab Import; atau tempel seluruh isinya ke tab SQL.
+5. Hasil verifikasi harus 3 kolom, 3 index, 1 FK, 2 trigger; produk_terpakai_belum_ditandai = 0.
+6. Jalankan versi aplikasi terbaru dan restart API/web setelah migrasi berhasil.
+
+File update boleh dijalankan ulang untuk perubahan yang dibuat file ini: objek existing tidak dihapus atau diganti.
+Jika skema server sudah berbeda dari dump, tinjau hasil precheck; file ini tidak menimpa definisi existing.
+Migrasi menggunakan database yang disebut eksplisit pada USE; sesuaikan jika nama production berubah.
+DDL MySQL melakukan implicit commit. Jika terjadi error, jangan mengandalkan ROLLBACK: periksa error lalu lanjutkan/rerun setelah diperbaiki.
+Trigger memerlukan akun pemasang yang memiliki izin TRIGGER dan akses UPDATE/SELECT pada tabel terkait.
+Backfill hanya menandai produk yang saat ini terhubung; pemakaian lama yang sudah dilepas tidak tercatat pada skema sebelumnya.
+
+VALIDASI:
+DDL saja dari dump diimpor ke database sementara lokal, tanpa INSERT data production.
+SQL migrasi dijalankan dua kali dengan data sintetis. Struktur hasil sama dengan lokal.
+Data aset/pengajuan dan updated_at produk tetap terjaga; pemakaian baru/ubah produk tercatat; relasi kategori terlindungi.
+Database sementara dibuang setelah pengujian. Database aplikasi lokal tidak dimodifikasi dalam audit ini.
+Pengujian menggunakan MySQL lokal 8.4.3, bukan server production 8.0.36.
+
+Referensi kompatibilitas MySQL: CREATE TRIGGER IF NOT EXISTS tersedia sejak 8.0.29.
+https://dev.mysql.com/doc/refman/8.0/en/create-trigger.html
+https://dev.mysql.com/doc/refman/8.0/en/create-table-foreign-keys.html

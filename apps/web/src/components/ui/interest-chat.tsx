@@ -19,13 +19,15 @@ export function InterestChat({ interestId, role, onRead }: { interestId: number;
   const busy = useRef(false);
   const onReadRef = useRef(onRead);
   onReadRef.current = onRead;
-  const bottom = useRef<HTMLDivElement>(null);
+  const messageList = useRef<HTMLDivElement>(null);
+  const followingLatest = useRef(true);
   const path = role === "admin" ? `/admin/pengajuan/${interestId}/messages` : `history/${interestId}/messages`;
 
   useEffect(() => {
     let active = true;
     after.current = 0;
     readThrough.current = 0;
+    followingLatest.current = true;
     setMessages([]);
     setLoaded(false);
     async function refresh() {
@@ -69,7 +71,14 @@ export function InterestChat({ interestId, role, onRead }: { interestId: number;
     return () => { active = false; window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
   }, [path, role]);
 
-  useEffect(() => { bottom.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [messages.length]);
+  useEffect(() => {
+    const list = messageList.current;
+    // Scroll only the conversation, never the surrounding page. Keep the
+    // reader's position when they are looking at older messages.
+    if (list && followingLatest.current) {
+      list.scrollTo({ top: list.scrollHeight, behavior: "instant" });
+    }
+  }, [messages.length]);
 
   async function send(event: FormEvent) {
     event.preventDefault();
@@ -81,6 +90,7 @@ export function InterestChat({ interestId, role, onRead }: { interestId: number;
       const saved = role === "admin"
         ? (await api.post<ChatMessage>(path, { body })).data
         : await accountRequest<ChatMessage>(path, { body });
+      followingLatest.current = true;
       setMessages(current => current.some(item => item.id === saved.id) ? current : [...current, saved].sort((a, b) => a.id - b.id));
       setDraft("");
     } catch (cause) {
@@ -90,13 +100,16 @@ export function InterestChat({ interestId, role, onRead }: { interestId: number;
 
   return <div className="interest-chat">
     <div className="interest-chat-heading"><MessageCircle size={19}/><div><strong>Chat pengajuan</strong><small>{!status ? "Memuat percakapan..." : status === "diproses" ? "Percakapan aktif · diperbarui otomatis" : "Percakapan telah ditutup"}</small></div></div>
-    <div className="interest-chat-messages" role="log" aria-label="Percakapan pengajuan" aria-live="polite">
+    <div ref={messageList} onScroll={event => {
+      const list = event.currentTarget;
+      followingLatest.current = list.scrollHeight - list.scrollTop - list.clientHeight < 48;
+    }} className="interest-chat-messages" role="log" aria-label="Percakapan pengajuan" aria-live="polite">
       {messages.length === 0 && <div className="interest-chat-loading" role="status"><LoaderCircle size={21}/><span>{loaded ? "Menunggu pesan..." : "Memuat percakapan..."}</span></div>}
       {messages.map(message => <div className={`interest-chat-message ${message.senderRole === role ? "mine" : "theirs"}`} key={message.id}>
         <small>{message.senderRole === "admin" ? "Pengelola aset" : "Pemohon"}</small>
         <p>{message.body}</p>
         <time>{new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" }).format(new Date(message.createdAt))}</time>
-      </div>)}<div ref={bottom}/>
+      </div>)}
     </div>
     {status === "diproses" && <form className="interest-chat-form" onSubmit={send}>
       <label className="sr-only" htmlFor={`chat-${role}-${interestId}`}>Tulis pesan</label>

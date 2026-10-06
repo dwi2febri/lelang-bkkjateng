@@ -26,11 +26,11 @@ type FavoritesContextValue = {
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
 
-export function PublicFavoritesProvider({ children }: { children: React.ReactNode }) {
+export function PublicFavoritesProvider({ children, initialUser }: { children: React.ReactNode; initialUser?: PublicUser | null }) {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [favoritesReady, setFavoritesReady] = useState(false);
-  const [publicUser, setPublicUser] = useState<PublicUser | null>(null);
-  const [accountChecked, setAccountChecked] = useState(false);
+  const [publicUser, setPublicUser] = useState<PublicUser | null>(initialUser ?? null);
+  const [accountChecked, setAccountChecked] = useState(initialUser !== undefined);
   const currentFavorites = useRef<number[]>([]);
   const started = useRef(false);
 

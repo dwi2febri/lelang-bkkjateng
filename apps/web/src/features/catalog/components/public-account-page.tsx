@@ -24,10 +24,6 @@ export function PublicAccountPage({ mode }: { mode: "register" | "login" }) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    const frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    return () => cancelAnimationFrame(frame);
-  }, [mode]);
-  useEffect(() => {
     const latest = readLatestApplicant();
     if (latest) { setName(latest.name); setEmail(latest.email); setPhone(latest.phone); }
   }, []);

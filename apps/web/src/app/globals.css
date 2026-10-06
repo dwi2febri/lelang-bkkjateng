@@ -1733,6 +1733,44 @@ footer button {
   background: var(--gold);
   border-radius: 8px;
 }
+.header-inner .public-navigation {
+  position: relative;
+  isolation: isolate;
+}
+.public-navigation-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  width: 20px;
+  height: 3px;
+  border-radius: 4px;
+  background: var(--gold);
+}
+.header-inner .public-navigation[data-marker-ready] a.active::after {
+  display: none;
+}
+.header-inner .public-navigation a {
+  border-radius: 6px;
+  transition: color 180ms ease;
+}
+@media (hover: hover) {
+  .header-inner .public-navigation a:hover {
+    color: var(--blue);
+  }
+}
+.header-inner .public-navigation a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 5px;
+}
+@media (max-width: 560px) {
+  .header-inner .public-navigation { position: absolute; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-inner .public-navigation a { transition: none; transform: none; }
+}
 .public-page-intro {
   background: #f2f6fa;
   padding: 28px 0 38px;

@@ -3,6 +3,7 @@ import {getCategorySettings,specValue,formatSpec} from "@/features/categories/se
 import { useCategories, CategoryIcon } from "@/features/categories/categories";
 import { AssetDetail } from "./asset-detail";
 import { HeroSlider } from "./hero-slider";
+import { PublicNavigation } from "./public-navigation";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
@@ -357,32 +358,11 @@ export default function CatalogPage({
           <a href="/" className="brand" aria-label="Beranda BKK Jateng">
             <BrandLogo variant="original" />
           </a>
-          <nav className={menu ? "open" : ""}>
-            {[
-              ["home", "Beranda"],
-              ["catalog", "Katalog Aset"],
-              ["schedule", "Jadwal Lelang"],
-            ].map(([v, l]) => (
-              <Link
-                key={v}
-                href={publicRoutes[v as PublicView]}
-                aria-current={!guidePage && !historyPage && view === v ? "page" : undefined}
-                onClick={() => setMenu(false)}
-                className={!guidePage && !historyPage && view === v ? "active" : ""}
-              >
-                {l}
-              </Link>
-            ))}
-            <Link
-              href="/panduan-lelang"
-              className={guidePage ? "active" : ""}
-              aria-current={guidePage ? "page" : undefined}
-              onClick={() => setMenu(false)}
-            >
-              Panduan Lelang
-            </Link>
-            <Link href="/riwayat-pengajuan" className={historyPage ? "active" : ""} aria-current={historyPage ? "page" : undefined} onClick={() => setMenu(false)}>History Pengajuan</Link>
-          </nav>
+          <PublicNavigation
+            activeHref={guidePage ? "/panduan-lelang" : historyPage ? "/riwayat-pengajuan" : publicRoutes[view]}
+            open={menu}
+            onNavigate={() => setMenu(false)}
+          />
           {accountChecked && !publicUser && <Link href="/masuk" className="public-login-link"><span>Sudah punya akun?</span> <strong>Masuk</strong></Link>}
           {accountChecked && publicUser && <button type="button" className="public-logout-button" aria-label="Keluar" title="Keluar" onClick={logoutPublic}><LogOut size={16}/><span>Keluar</span></button>}
           <button

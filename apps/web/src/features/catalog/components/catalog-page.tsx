@@ -3,6 +3,8 @@ import {getCategorySettings,specValue,formatSpec} from "@/features/categories/se
 import { useCategories, CategoryIcon } from "@/features/categories/categories";
 import { AssetDetail } from "./asset-detail";
 import { HeroSlider } from "./hero-slider";
+import { AssetBadge } from "./asset-badge";
+import { AssetCardPrice } from "./asset-card-price";
 import { PublicNavigation } from "./public-navigation";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -845,14 +847,7 @@ export default function CatalogPage({
                                   loading="lazy"
                                 />
                               </button>
-                              <span
-                                className={
-                                  "asset-badge " +
-                                  (a.oldPrice ? "discount" : "available")
-                                }
-                              >
-                                {a.oldPrice ? "Turun Harga" : "Pilihan Aset"}
-                              </span>
+                              <AssetBadge price={a.price} oldPrice={a.oldPrice} />
                               <button
                                 aria-label={
                                   favorites.includes(a.id)
@@ -875,14 +870,22 @@ export default function CatalogPage({
                                   }
                                 />
                               </button>
-                              <span className="photo-category">
-                                {a.category}
-                              </span>
                             </div>
                             <div className="card-content">
+                              <div className="card-meta">
+                              <span className="card-category">
+                                <span aria-hidden="true">
+                                  <CategoryIcon
+                                    name={masterCategories.find(c => c.name === a.category)?.icon || "building"}
+                                    size={17}
+                                  />
+                                </span>
+                                <span>{a.category}</span>
+                              </span>
                               <div className="card-location">
                                 <MapPin size={13} />
                                 {a.city}, Jawa Tengah
+                              </div>
                               </div>
                               <button
                                 className="card-title"
@@ -893,22 +896,7 @@ export default function CatalogPage({
                               <div className="specs">
                                 {getCategorySettings(a.category,masterCategories.find(c=>c.name===a.category)?.settings).fields.filter(f=>f.enabled&&f.summary).map(field=><span key={field.key}>{field.label}: {formatSpec(specValue(a,field.key),field.unit)}</span>)}
                               </div>
-                              <div className="price-line">
-                                <span>Harga limit</span>
-                                {a.oldPrice && <del>{money(a.oldPrice)}</del>}
-                              </div>
-                              <div className="card-price">
-                                <strong>{money(a.price)}</strong>
-                                {a.oldPrice && (
-                                  <b>
-                                    −
-                                    {Math.round(
-                                      (1 - a.price / a.oldPrice) * 100,
-                                    )}
-                                    %
-                                  </b>
-                                )}
-                              </div>
+                              <AssetCardPrice price={a.price} oldPrice={a.oldPrice} />
                               <div className="card-bottom">
                                 <span>
                                   {a.saleMethod === "Lelang" && a.auctionDate ? <><CalendarDays size={14} />{date(a.auctionDate)}</> : a.saleMethod}
@@ -917,6 +905,7 @@ export default function CatalogPage({
                                   onClick={() => open(a)}
                                   aria-label={`Detail ${a.title}`}
                                 >
+                                  Lihat detail
                                   <ArrowUpRight size={18} />
                                 </button>
                               </div>

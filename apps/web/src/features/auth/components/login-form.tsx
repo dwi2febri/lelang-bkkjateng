@@ -45,7 +45,7 @@ export function LoginForm() {
     <main className="login-page">
       <section className="login-story">
         <Link href="/" className="admin-brand">
-          <BrandLogo />
+          <BrandLogo variant="original" />
         </Link>
         <div className="login-story-content">
           <span className="login-kicker">RUANG KERJA ADMINISTRATOR</span>

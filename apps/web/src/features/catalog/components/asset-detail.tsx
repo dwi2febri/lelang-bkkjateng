@@ -1,6 +1,9 @@
 "use client";
 import { CreditSimulation } from "@/features/credit-products/credit-simulation";
 import { AssetGallery } from "./asset-gallery";
+import { AssetCard } from "./asset-card";
+import { usePublicFavorites } from "../public-favorites-provider";
+import { useRouter } from "next/navigation";
 import { AssetLocationMap } from "./asset-location-map";
 import { AssetBrochure } from "./asset-brochure";
 import {flushSync} from "react-dom";
@@ -13,6 +16,9 @@ import {
   MapPin,
   ArrowUpRight,
   FileText,
+  ListChecks,
+  HandCoins,
+  Calculator,
   Route,
   Bus,
   Landmark,
@@ -43,6 +49,15 @@ import {useCategories,categoryIcons} from "@/features/categories/categories";
 import {CatalogIcon} from "@/components/ui/catalog-icon";
 import {getCategorySettings, specValue, formatSpec, specificationIcon, facilityIcon, type CategorySettings} from "@/features/categories/settings";
 import {isGoogleMapsUrl,googleMapsSearchUrl,isMapPoint,pointGoogleMapsUrl} from "@/features/aset/google-maps";
+
+const detailTabIcons = {
+  deskripsi: FileText,
+  spesifikasi: ListChecks,
+  lokasi: MapPin,
+  fasilitas: Route,
+  skema: HandCoins,
+  kalkulator: Calculator,
+};
 
 const money = (value: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -75,7 +90,11 @@ export function AssetDetail({
   categorySettings?: CategorySettings;
 }) {
   const [shareMessage, setShareMessage] = useState("");
+  const { favorites, toggleFavorite } = usePublicFavorites();
+  const router = useRouter();
   const introRef=useRef<HTMLDivElement>(null);
+  const contactSectionRef = useRef<HTMLElement>(null);
+  const [submitReached, setSubmitReached] = useState(false);
   const summaryCardRef=useRef<HTMLDivElement>(null);
   const brochureRef=useRef<HTMLDivElement>(null);
   const [preparingPrint,setPreparingPrint]=useState(false);
@@ -88,6 +107,35 @@ export function AssetDetail({
   const method = asset.saleMethod || "Lelang";
   const details = asset.details || {};
   const locationUrl=isMapPoint(details)?pointGoogleMapsUrl(details):details.googleMapsUrl&&isGoogleMapsUrl(details.googleMapsUrl)?details.googleMapsUrl:"";
+  useEffect(() => {
+    const page = introRef.current?.closest<HTMLElement>(".asset-detail-page");
+    const header = document.querySelector<HTMLElement>("header:has(.header-inner)");
+    if (!page || !header) return;
+    const update = () => page.style.setProperty("--asset-mobile-header-height", `${header.getBoundingClientRect().height}px`);
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const section = contactSectionRef.current;
+    if (!section) return;
+    const target = section.querySelector<HTMLElement>("[data-interest-submit]") ?? section.lastElementChild ?? section;
+    const update = () => {
+      setSubmitReached(target.getBoundingClientRect().top < window.innerHeight);
+    };
+    // Keep the bar hidden after passing the form, including the related assets.
+    const observer = new IntersectionObserver(([entry]) => {
+      setSubmitReached(entry.boundingClientRect.top < (entry.rootBounds?.bottom ?? window.innerHeight));
+    });
+    update();
+    observer.observe(target);
+    window.addEventListener("resize", update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [asset.id, submitted]);
   useEffect(()=>{
     const intro=introRef.current,card=summaryCardRef.current;
     if(!intro||!card)return;
@@ -214,11 +262,15 @@ export function AssetDetail({
               ["fasilitas", config.facilitiesLabel, config.sections.facilities],
               ["skema", "Skema Pembelian", config.sections.scheme],
               ["kalkulator", "Kalkulator", config.sections.calculator],
-            ].filter(([, , visible])=>visible).map(([id, text]) => (
-              <a key={String(id)} href={`#${id}`}>
-                {String(text)}
-              </a>
-            ))}
+            ].filter(([, , visible])=>visible).map(([id, text]) => {
+              const Icon = detailTabIcons[String(id) as keyof typeof detailTabIcons];
+              return (
+                <a key={String(id)} href={`#${id}`} aria-label={String(text)} title={String(text)}>
+                  <Icon className="asset-detail-tab-icon" size={21} aria-hidden="true" />
+                  <span className="asset-detail-tab-label">{String(text)}</span>
+                </a>
+              );
+            })}
           </nav>
           </div>
           {config.sections.description && (<section className="asset-detail-panel" id="deskripsi">
@@ -261,9 +313,9 @@ export function AssetDetail({
             >
               {locationUrl?"Lihat lokasi di Google Maps":"Cari alamat di Google Maps"} <ArrowUpRight size={16} />
             </a>
-            <p className="asset-detail-muted">
-              {details.locationIsDemo?"Titik pada peta merupakan koordinat dummy untuk demonstrasi, bukan lokasi pasti aset.":locationUrl?"Buka tautan untuk melihat lokasi aset yang ditentukan petugas.":"Pencarian berdasarkan alamat. Titik lokasi tepat perlu dikonfirmasi dengan petugas."}
-            </p>
+            {!details.locationIsDemo && <p className="asset-detail-muted">
+              {locationUrl?"Buka tautan untuk melihat lokasi aset yang ditentukan petugas.":"Pencarian berdasarkan alamat. Titik lokasi tepat perlu dikonfirmasi dengan petugas."}
+            </p>}
           </section>)}
           {config.sections.facilities && (<section className="asset-detail-panel" id="fasilitas">
             <h2>{config.facilitiesLabel}</h2>
@@ -335,7 +387,7 @@ export function AssetDetail({
           {(config.sections.calculator || asset.creditProduct) && (
             asset.creditProduct ? <CreditSimulation key={asset.creditProduct.id} price={asset.price} product={asset.creditProduct}/> : <MortgageCalculator price={asset.price} />
           )}
-          <section className="asset-detail-panel" id="minat">
+          <section className="asset-detail-panel" id="minat" ref={contactSectionRef}>
             <h2>Hubungi pengelola aset</h2>
             <p>
               Sampaikan pertanyaan atau permintaan kunjungan melalui formulir
@@ -371,17 +423,21 @@ export function AssetDetail({
               {summaryFields.length>0 && <dl className="asset-summary-area">
                 {summaryFields.map(field=><div key={field.key}><dt><CatalogIcon name={specificationIcon(field.key,field.icon)} size={18}/>{field.label}</dt><dd>{formatSpec(specValue(asset,field.key),field.unit)}</dd></div>)}
               </dl>}
-              {(config.sections.financing || asset.creditProduct) && (
-                <a href="#minat" className="primary-button asset-kpr-button">
-                  {asset.creditProduct ? `Ajukan ${asset.creditProduct.name}` : config.financingLabel}
-                </a>
-              )}
-              <a href="#minat" className="outline-button asset-contact-button">
-                {config.contactLabel} <ArrowUpRight size={17} />
-              </a>
-              <p className="asset-summary-hours">
-                Hubungi petugas untuk informasi jam layanan.
-              </p>
+              <div className="asset-contact-bar" data-submit-reached={submitReached}>
+                <div className="asset-contact-links">
+                  {(config.sections.financing || asset.creditProduct) && (
+                    <a href="#minat" className="primary-button asset-kpr-button">
+                      {asset.creditProduct ? `Ajukan ${asset.creditProduct.name}` : config.financingLabel}
+                    </a>
+                  )}
+                  <a href="#minat" className="outline-button asset-contact-button">
+                    {config.contactLabel} <ArrowUpRight size={17} />
+                  </a>
+                </div>
+                <p className="asset-summary-hours">
+                  Hubungi petugas untuk informasi jam layanan.
+                </p>
+              </div>
             </div>
           </div>
           <div className="asset-detail-actions">
@@ -409,21 +465,16 @@ export function AssetDetail({
           <h2>Aset serupa untuk Anda</h2>
           <div className="asset-related-grid">
             {related.map((item) => (
-              <Link
+              <AssetCard
                 key={item.id}
-                href={`/katalog-aset/${encodeURIComponent(item.slug)}`}
-              >
-                <img
-                  src={item.image}
-                  alt={`Ilustrasi ${item.title}`}
-                  loading="lazy"
-                />
-                <div>
-                  <small>{item.city}</small>
-                  <h3>{item.title}</h3>
-                  <strong>{money(item.price)}</strong>
-                </div>
-              </Link>
+                asset={item}
+                categories={categories}
+                saved={favorites.includes(item.id)}
+                onFavorite={(id) => {
+                  void toggleFavorite(id).catch(() => setShareMessage("Favorit belum tersimpan di akun. Coba kembali."));
+                }}
+                onOpen={(item) => router.push(`/katalog-aset/${encodeURIComponent(item.slug)}`)}
+              />
             ))}
           </div>
         </section>

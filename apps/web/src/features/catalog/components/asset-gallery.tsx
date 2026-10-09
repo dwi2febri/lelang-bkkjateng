@@ -18,6 +18,19 @@ export function AssetGallery({
   const [open, setOpen] = useState(false);
   const [views, setViews] = useState(asset.viewCount || 0);
   const modal = useRef<HTMLDivElement>(null);
+  const mobileTrack = useRef<HTMLDivElement>(null);
+  const [mobileActive, setMobileActive] = useState(0);
+  function scrollToPhoto(index: number) {
+    const track = mobileTrack.current;
+    const slide = track?.children[index] as HTMLElement | undefined;
+    if (track && slide)
+      track.scrollTo({
+        left: slide.offsetLeft - track.offsetLeft,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant"
+          : "smooth",
+      });
+  }
   useEffect(() => {
     if (preview) return;
     let cancelled = false;
@@ -88,6 +101,49 @@ export function AssetGallery({
   return (
     <>
       <div className="asset-photo-gallery">
+        <div
+          className="gallery-mobile"
+          role="region"
+          aria-label={`Foto ${asset.title}`}
+          aria-roledescription="karusel"
+        >
+          <div
+            className="gallery-mobile-track"
+            ref={mobileTrack}
+            onScroll={(event) => {
+              const track = event.currentTarget;
+              setMobileActive(Math.round(track.scrollLeft / track.clientWidth));
+            }}
+          >
+            {photos.map((url, index) => (
+              <button
+                key={url}
+                className="gallery-mobile-slide"
+                onClick={() => show(index)}
+                aria-label={`Perbesar foto ${index + 1} dari ${photos.length}: ${asset.title}`}
+              >
+                <img
+                  src={url}
+                  alt={`Foto ${asset.title}, ${index + 1}`}
+                  loading={index === 0 ? "eager" : "lazy"}
+                />
+              </button>
+            ))}
+          </div>
+          {photos.length > 1 && (
+            <div className="gallery-mobile-dots" aria-label="Pilih foto">
+              {photos.map((url, index) => (
+                <button
+                  key={url}
+                  className={index === mobileActive ? "active" : ""}
+                  aria-label={`Tampilkan foto ${index + 1}`}
+                  aria-pressed={index === mobileActive}
+                  onClick={() => scrollToPhoto(index)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
         <button
           className="gallery-cover"
           onClick={() => show(0)}

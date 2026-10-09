@@ -1,8 +1,17 @@
 "use client";
-import { useEffect, useState } from "react";
-import { MapPin, Mail, Phone, MessageCircle, ShieldCheck, Users, UserRound } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { MapPin, Mail, Phone, MessageCircle, ShieldCheck, Users, UserRound, ChevronUp } from "lucide-react";
 
 export function PublicFooter() {
+  const footerRef = useRef<HTMLElement>(null);
+  const [footerVisible, setFooterVisible] = useState(false);
+  useEffect(() => {
+    const footer = footerRef.current;
+    if (!footer) return;
+    const observer = new IntersectionObserver(([entry]) => setFooterVisible(entry.isIntersecting));
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
   const [counts, setCounts] = useState<{ daily: number; total: number } | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -17,7 +26,7 @@ export function PublicFooter() {
       .catch(() => {});
     return () => controller.abort();
   }, []);
-  return <footer className="public-footer">
+  return <footer className="public-footer" ref={footerRef}>
     <div className="container public-footer-grid">
       <div className="public-footer-about">
         <img src="/logo/bkk-lelang-v2.png" alt="BKK Jateng Lelang dan Katalog Aset" width={2172} height={724} />
@@ -36,5 +45,20 @@ export function PublicFooter() {
       <span><UserRound size={17} /> Pengunjung hari ini <strong>{counts ? counts.daily.toLocaleString("id-ID") : "—"}</strong></span>
       <span><Users size={18} /> Total pengunjung <strong>{counts ? counts.total.toLocaleString("id-ID") : "—"}</strong></span>
     </div>
+    <button
+      type="button"
+      className="public-back-to-top"
+      data-visible={footerVisible}
+      aria-label="Kembali ke atas"
+      title="Kembali ke atas"
+      tabIndex={footerVisible ? 0 : -1}
+      aria-hidden={!footerVisible}
+      onClick={() => window.scrollTo({
+        top: 0,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+      })}
+    >
+      <ChevronUp size={25} aria-hidden="true" />
+    </button>
   </footer>;
 }

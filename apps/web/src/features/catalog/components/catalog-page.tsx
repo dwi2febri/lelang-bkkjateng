@@ -1,10 +1,8 @@
 "use client";
-import {getCategorySettings,specValue,formatSpec} from "@/features/categories/settings";
 import { useCategories, CategoryIcon } from "@/features/categories/categories";
 import { AssetDetail } from "./asset-detail";
 import { HeroSlider } from "./hero-slider";
-import { AssetBadge } from "./asset-badge";
-import { AssetCardPrice } from "./asset-card-price";
+import { AssetCard } from "./asset-card";
 import { PublicNavigation } from "./public-navigation";
 import { BrandLogo } from "@/components/ui/brand-logo";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -27,7 +25,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   Search,
-  MapPin,
   ChevronDown,
   Heart,
   Building2,
@@ -57,13 +54,6 @@ const money = (n: number) =>
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(n);
-const date = (s: string) =>
-  new Date(s).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-    timeZone: "Asia/Jakarta",
-  });
 const saleMethodCards = [
   { name: "Jual Beli", description: "Pilihan aset dengan penawaran jual beli langsung.", icon: "/images/sale-methods/jual-beli-3d.webp", tone: "buy" },
   { name: "Lelang", description: "Temukan aset yang ditawarkan melalui proses lelang.", icon: "/images/sale-methods/lelang-3d.webp", tone: "auction" },
@@ -474,7 +464,7 @@ export default function CatalogPage({
                       {formError}
                     </p>
                   )}
-                  <button className="primary-button" disabled={sending}>
+                  <button className="primary-button" disabled={sending} data-interest-submit>
                     {sending ? "Menyimpan…" : "Kirim Minat"}
                     <ArrowRight size={17} />
                   </button>
@@ -834,83 +824,7 @@ export default function CatalogPage({
                     ) : (
                       <div className="asset-grid">
                         {visible.map((a) => (
-                          <article className="asset-card" key={a.id}>
-                            <div className="card-photo">
-                              <button
-                                className="photo-link"
-                                onClick={() => open(a)}
-                                aria-label={`Lihat ${a.title}`}
-                              >
-                                <img
-                                  src={a.image}
-                                  alt={`Ilustrasi ${a.category.toLowerCase()}`}
-                                  loading="lazy"
-                                />
-                              </button>
-                              <AssetBadge price={a.price} oldPrice={a.oldPrice} />
-                              <button
-                                aria-label={
-                                  favorites.includes(a.id)
-                                    ? "Hapus dari favorit"
-                                    : "Simpan ke favorit"
-                                }
-                                aria-pressed={favorites.includes(a.id)}
-                                className={
-                                  "heart " +
-                                  (favorites.includes(a.id) ? "saved" : "")
-                                }
-                                onClick={() => favorite(a.id)}
-                              >
-                                <Heart
-                                  size={18}
-                                  fill={
-                                    favorites.includes(a.id)
-                                      ? "currentColor"
-                                      : "none"
-                                  }
-                                />
-                              </button>
-                            </div>
-                            <div className="card-content">
-                              <div className="card-meta">
-                              <span className="card-category">
-                                <span aria-hidden="true">
-                                  <CategoryIcon
-                                    name={masterCategories.find(c => c.name === a.category)?.icon || "building"}
-                                    size={17}
-                                  />
-                                </span>
-                                <span>{a.category}</span>
-                              </span>
-                              <div className="card-location">
-                                <MapPin size={13} />
-                                {a.city}, Jawa Tengah
-                              </div>
-                              </div>
-                              <button
-                                className="card-title"
-                                onClick={() => open(a)}
-                              >
-                                {a.title}
-                              </button>
-                              <div className="specs">
-                                {getCategorySettings(a.category,masterCategories.find(c=>c.name===a.category)?.settings).fields.filter(f=>f.enabled&&f.summary).map(field=><span key={field.key}>{field.label}: {formatSpec(specValue(a,field.key),field.unit)}</span>)}
-                              </div>
-                              <AssetCardPrice price={a.price} oldPrice={a.oldPrice} />
-                              <div className="card-bottom">
-                                <span>
-                                  {a.saleMethod === "Lelang" && a.auctionDate ? <><CalendarDays size={14} />{date(a.auctionDate)}</> : a.saleMethod}
-                                </span>
-                                <button
-                                  onClick={() => open(a)}
-                                  aria-label={`Detail ${a.title}`}
-                                >
-                                  Lihat detail
-                                  <ArrowUpRight size={18} />
-                                </button>
-                              </div>
-                            </div>
-                          </article>
+                          <AssetCard key={a.id} asset={a} categories={masterCategories} saved={favorites.includes(a.id)} onFavorite={favorite} onOpen={open} />
                         ))}
                       </div>
                     )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 function scrollToPageStart() {
@@ -13,24 +13,21 @@ function scrollToPageStart() {
 export function NavigationScroll() {
   const pathname = usePathname();
   const search = useSearchParams().toString();
-
-  useEffect(() => {
-    const previous = window.history.scrollRestoration;
-    window.history.scrollRestoration = "manual";
-    window.addEventListener("pageshow", scrollToPageStart);
-    return () => {
-      window.history.scrollRestoration = previous;
-      window.removeEventListener("pageshow", scrollToPageStart);
-    };
-  }, []);
+  const route = `${pathname}?${search}`;
+  const previousRoute = useRef(route);
 
   useLayoutEffect(() => {
+    // Preserve the browser's saved position on reload, including while async
+    // content grows. Only an actual route change should reset the viewport.
+    window.history.scrollRestoration = "auto";
+    if (previousRoute.current === route) return;
+    previousRoute.current = route;
     scrollToPageStart();
     // Apply once after the router's own scroll/focus handling has finished.
     // Do not run on data refreshes or while the visitor scrolls the same page.
     const frame = window.requestAnimationFrame(scrollToPageStart);
     return () => window.cancelAnimationFrame(frame);
-  }, [pathname, search]);
+  }, [route]);
 
   return null;
 }

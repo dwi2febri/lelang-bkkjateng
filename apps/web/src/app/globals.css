@@ -4869,7 +4869,7 @@ footer button {
 .public-footer .public-back-to-top {
   position: fixed;
   right: max(18px, env(safe-area-inset-right, 0px));
-  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(max(90px, var(--visitor-row-height, 90px) + 24px) + env(safe-area-inset-bottom, 0px));
   z-index: 40;
   display: grid;
   place-items: center;
@@ -4966,6 +4966,13 @@ footer button {
 .homepage-compact .section-heading h2 { margin: 6px 0; }
 .homepage-compact .section-heading p { margin-top: 6px; }
 .homepage-compact .categories { margin-top: 14px; }
+@media (min-width: 901px) {
+  .homepage-compact .categories strong {
+    font-size: clamp(13px, 0.95vw, 26px);
+    line-height: 1.4;
+    text-align: center;
+  }
+}
 .homepage-compact .categories > :is(button, a) { padding-block: 16px; gap: 10px; }
 .homepage-compact .catalog-section { padding: 24px 0; }
 .homepage-compact .sale-method-shortcuts {
@@ -4984,6 +4991,18 @@ footer button {
   .homepage-compact .sale-method-shortcuts .sale-method-shortcut:hover { background: #fff; }
 }
 .homepage-compact .sale-method-shortcuts-heading h2 { margin: 6px 0 14px; }
+@media (min-width: 901px) {
+  .homepage-compact .sale-method-shortcuts-heading h2 {
+    font-size: clamp(22px, 1.5vw, 38px);
+  }
+  .homepage-compact .sale-method-shortcut-copy strong {
+    font-size: clamp(16px, 1.1vw, 28px);
+  }
+  .homepage-compact .sale-method-shortcut-copy small {
+    font-size: clamp(12px, 0.85vw, 22px);
+    max-width: none;
+  }
+}
 .homepage-compact .sale-method-shortcut { min-height: 104px; padding-block: 18px; }
 .homepage-compact .catalog-section .section-heading { margin-bottom: 16px; }
 .homepage-compact .guide-banner { margin-block: 24px; padding-block: 10px; }
@@ -5072,6 +5091,29 @@ footer button {
 }
 
 /* Fluid public-page gutters: keep using the full viewport, including at browser zoom-out. */
+@media (min-width: 801px) {
+  .search-panel .search-title > span { font-size: clamp(16px, 1.12vw, 30px); }
+  .search-panel .search-title small { font-size: clamp(12px, 0.84vw, 23px); }
+  .search-panel .search-fields label > span,
+  .search-panel .search-fields > .filter-select > label { font-size: clamp(11px, 0.77vw, 21px); }
+  .search-panel .search-fields input,
+  .search-panel .search-fields .filter-select-trigger,
+  .search-panel .search-fields .filter-select-option,
+  .search-panel .search-fields .primary-button { font-size: clamp(13px, 0.91vw, 25px); }
+  .search-panel .search-fields label > div,
+  .search-panel .search-fields .filter-select-trigger,
+  .search-panel .search-fields .primary-button {
+    min-height: clamp(44px, 3.06vw, 84px);
+    height: auto;
+  }
+  .search-panel .search-fields svg { width: clamp(18px, 1.25vw, 32px); height: clamp(18px, 1.25vw, 32px); flex-shrink: 0; }
+}
+@media (min-width: 801px) {
+  .header-inner .public-navigation a { font-size: clamp(14px, 0.98vw, 27px); }
+  .header-inner .public-login-link,
+  .header-inner .public-logout-button,
+  .header-inner .favorite-nav { font-size: clamp(13px, 0.91vw, 25px); }
+}
 .container { width:calc(100% - clamp(40px,5vw,112px)); max-width:none; }
 @media (min-width: 1101px) {
   .hero-slider .hero-note,

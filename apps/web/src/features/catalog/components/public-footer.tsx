@@ -4,7 +4,22 @@ import { MapPin, Mail, Phone, MessageCircle, ShieldCheck, Users, UserRound, Chev
 
 export function PublicFooter() {
   const footerRef = useRef<HTMLElement>(null);
+  const visitorsRef = useRef<HTMLDivElement>(null);
   const [footerVisible, setFooterVisible] = useState(false);
+  useEffect(() => {
+    const footer = footerRef.current;
+    const visitors = visitorsRef.current;
+    if (!footer || !visitors) return;
+    // Keep the floating button above the entire statistics row, even when
+    // zoom or a narrow viewport makes the counters wrap onto multiple lines.
+    const updateClearance = () => {
+      footer.style.setProperty("--visitor-row-height", `${visitors.getBoundingClientRect().height}px`);
+    };
+    updateClearance();
+    const observer = new ResizeObserver(updateClearance);
+    observer.observe(visitors);
+    return () => observer.disconnect();
+  }, []);
   useEffect(() => {
     const footer = footerRef.current;
     if (!footer) return;
@@ -41,7 +56,7 @@ export function PublicFooter() {
       </div></div>
       <div><h4>Produk</h4><div className="public-footer-products"><span>Simpanan</span><span>Pinjaman</span><span>Keris</span></div></div>
     </div>
-    <div className="container public-footer-visitors" aria-live="polite">
+    <div className="container public-footer-visitors" ref={visitorsRef} aria-live="polite">
       <span><UserRound size={17} /> Pengunjung hari ini <strong>{counts ? counts.daily.toLocaleString("id-ID") : "—"}</strong></span>
       <span><Users size={18} /> Total pengunjung <strong>{counts ? counts.total.toLocaleString("id-ID") : "—"}</strong></span>
     </div>

@@ -143,6 +143,10 @@ export function CatalogSidebar({
           closeMobileFilters();
         }}
       >
+        <button className="primary-button" type="submit">
+          <Search size={17} />
+          Terapkan Filter
+        </button>
         <label>
           <span>Kata kunci</span>
           <div className="sidebar-search-field">
@@ -251,10 +255,6 @@ export function CatalogSidebar({
             {error}
           </div>
         )}
-        <button className="primary-button" type="submit">
-          <Search size={17} />
-          Terapkan Filter
-        </button>
       </form>
       <p>Temukan aset berdasarkan kategori, lokasi, dan anggaran Anda.</p>
       </div>

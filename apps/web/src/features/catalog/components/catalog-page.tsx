@@ -182,7 +182,7 @@ export default function CatalogPage({
         if (signal?.aborted || (e instanceof Error && e.name === "AbortError"))
           return;
         setError(
-          "Katalog belum dapat dimuat. Pastikan layanan API dan MySQL berjalan.",
+          "Katalog belum dapat dimuat. Coba refresh halaman.",
         );
       } finally {
         if (!signal?.aborted) {

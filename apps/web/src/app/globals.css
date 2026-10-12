@@ -3238,6 +3238,15 @@ footer button {
 .hero.hero-slider {
   height: 550px;
 }
+.hero-illustrated .hero-image { object-position: right center; }
+.hero-illustrated .hero-shade {
+  background: linear-gradient(90deg, #08264c40, #08264c18 45%, transparent 65%);
+}
+@media (max-width: 800px) {
+  .hero-illustrated .hero-shade {
+    background: linear-gradient(90deg, #08264ce8, #08264cbd 55%, #08264c55);
+  }
+}
 .hero-slide {
   position: absolute;
   inset: 0;

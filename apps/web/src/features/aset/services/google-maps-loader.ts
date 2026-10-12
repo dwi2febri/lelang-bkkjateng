@@ -1,3 +1,5 @@
+/// <reference types="google.maps" />
+
 import {importLibrary,setOptions} from "@googlemaps/js-api-loader";
 
 let configured=false;

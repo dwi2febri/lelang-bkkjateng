@@ -6,6 +6,7 @@ import { ArrowUpRight, ShieldCheck } from "lucide-react";
 
 import defaults from "@/features/banner/defaults.json";
 import type { BannerSlide } from "@/features/banner/types";
+import { resolveBannerImage, isIllustratedBanner } from "@/features/banner/images";
 
 export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } = {}) {
   const [savedSlides, setSavedSlides] = useState<BannerSlide[]>(defaults);
@@ -38,9 +39,10 @@ export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } 
     return () => window.clearInterval(timer);
   }, [focused, reducedMotion, slides.length, previewSlides]);
   const slide = slides[active % slides.length];
+  const image = resolveBannerImage(slide.image);
   return (
     <section
-      className="hero hero-slider"
+      className={`hero hero-slider${isIllustratedBanner(image) ? " hero-illustrated" : ""}`}
       aria-label="Informasi pilihan BKK Jateng"
       aria-roledescription="carousel"
       onFocusCapture={() => setFocused(true)}
@@ -58,7 +60,7 @@ export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } 
       >
         <img
           className="hero-image"
-          src={slide.image}
+          src={image}
           alt=""
         />
         <div className="hero-shade" />

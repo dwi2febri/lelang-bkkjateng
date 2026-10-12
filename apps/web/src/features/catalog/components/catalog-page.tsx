@@ -474,35 +474,17 @@ export default function CatalogPage({
           ) : (
             <>
               {view === "home" && <HeroSlider />}
-              {view !== "home" && (
-                <section className={`public-page-intro${view === "catalog" || view === "schedule" ? " public-page-intro-compact" : ""}`}>
+              {view === "favorites" && (
+                <section className="public-page-intro">
                   <div className="container">
                     <div className="public-breadcrumb">
                       <Link href="/">Beranda</Link>
                       <span>/</span>
-                      <span>
-                        {view === "catalog"
-                          ? "Katalog Aset"
-                          : view === "schedule"
-                            ? "Jadwal Lelang"
-                            : "Favorit"}
-                      </span>
+                      <span>Favorit</span>
                     </div>
                     <span className="overline">LELANG BKK JATENG</span>
-                    <h1>
-                      {view === "catalog"
-                        ? "Katalog Aset"
-                        : view === "schedule"
-                          ? "Jadwal Lelang"
-                          : "Aset Favorit"}
-                    </h1>
-                    <p>
-                      {view === "catalog"
-                        ? "Jelajahi seluruh aset dan temukan pilihan yang sesuai kebutuhan Anda."
-                        : view === "schedule"
-                          ? "Temukan jadwal lelang, waktu pelaksanaan, dan informasi aset dalam satu tempat."
-                          : "Simpan dan temukan kembali aset pilihan Anda."}
-                    </p>
+                    <h1>Aset Favorit</h1>
+                    <p>Simpan dan temukan kembali aset pilihan Anda.</p>
                   </div>
                 </section>
               )}
@@ -632,6 +614,15 @@ export default function CatalogPage({
                 }
                 id="katalog"
               >
+                {(view === "catalog" || view === "schedule") && (
+                  <div className="container catalog-page-breadcrumb">
+                    <div className="public-breadcrumb" aria-label="Lokasi halaman">
+                      <Link href="/">Beranda</Link>
+                      <span aria-hidden="true">/</span>
+                      <span aria-current="page">{view === "catalog" ? "Katalog Aset" : "Jadwal Lelang"}</span>
+                    </div>
+                  </div>
+                )}
                 <div
                   className={
                     "container" +

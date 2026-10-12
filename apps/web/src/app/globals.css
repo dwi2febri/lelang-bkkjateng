@@ -1879,6 +1879,7 @@ footer button {
 .public-breadcrumb a {
   color: var(--blue);
 }
+.catalog-page-breadcrumb .public-breadcrumb { margin-bottom: 28px; }
 .public-page-intro h1 {
   color: var(--navy);
   font-size: 36px;

@@ -7,6 +7,9 @@ import { PublicFavoritesProvider } from "@/features/catalog/public-favorites-pro
 import { getPublicUser } from "@/lib/public-auth";
 export const metadata: Metadata = {
   title: "Lelang BKK Jateng | Temukan Aset Pilihan Anda",
+  icons: {
+    icon: { url: "/icon-bkk.webp?v=2", type: "image/webp", sizes: "192x192" },
+  },
   description:
     "Jelajahi katalog aset lelang BKK Jateng. Properti, tanah, ruko, dan kendaraan di Jawa Tengah.",
 };

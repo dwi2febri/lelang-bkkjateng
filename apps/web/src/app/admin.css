@@ -2136,7 +2136,7 @@
 .login-story {
   isolation:isolate;
   background-color:#103b58;
-  background-image:linear-gradient(90deg,rgba(8,39,65,.8),rgba(8,39,65,.45) 62%,rgba(8,39,65,.12)),url('/images/login-auction-plain.png');
+  background-image:linear-gradient(90deg,rgba(8,39,65,.8),rgba(8,39,65,.45) 62%,rgba(8,39,65,.12)),url('/images/login-auction-plain.webp');
   background-size:cover;
   background-position:center,center bottom;
 }
@@ -2147,7 +2147,7 @@
 .login-story-feature { margin-top:32px; }
 .login-story-feature span,.login-story > small { color:#bdd1e0; }
 @media(max-width:700px) {
-  .login-story { background-position:center,center 62%; background-image:linear-gradient(90deg,rgba(8,39,65,.92),rgba(8,39,65,.58)),url('/images/login-auction-plain.png'); }
+  .login-story { background-position:center,center 62%; background-image:linear-gradient(90deg,rgba(8,39,65,.92),rgba(8,39,65,.58)),url('/images/login-auction-plain.webp'); }
   .login-story-content { padding:26px 0 0; }
   .login-story h1 { font-size:29px; }
 }

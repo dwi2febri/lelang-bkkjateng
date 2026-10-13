@@ -884,7 +884,7 @@ export default function CatalogPage({
               </section>
               <section className="container guide-banner">
                 <div className="guide-illustration" aria-hidden="true">
-                  <Image src="/images/auction-guide-illustration.png" alt="" width={1536} height={1024} sizes="(max-width: 620px) 240px, (max-width: 800px) 160px, 300px" />
+                  <Image src="/images/auction-guide-illustration.webp" alt="" width={1536} height={1024} sizes="(max-width: 620px) 240px, (max-width: 800px) 160px, 300px" />
                 </div>
                 <div>
                   <span className="overline">

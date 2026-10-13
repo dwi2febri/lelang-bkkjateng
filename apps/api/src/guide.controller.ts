@@ -1,3 +1,4 @@
+import { imageToWebp } from "./image-webp";
 import {
   BadRequestException,
   Body,
@@ -98,21 +99,8 @@ export class GuideController {
     }),
   )
   async upload(@UploadedFile() file?: { buffer: Buffer }) {
-    const data = file?.buffer;
-    if (!data || data.length < 12)
-      throw new BadRequestException("Pilih gambar PNG, JPG, atau WebP.");
-    const mime = data
-      .subarray(0, 8)
-      .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-      ? "image/png"
-      : data[0] === 255 && data[1] === 216 && data[2] === 255
-        ? "image/jpeg"
-        : data.toString("ascii", 0, 4) === "RIFF" &&
-            data.toString("ascii", 8, 12) === "WEBP"
-          ? "image/webp"
-          : "";
-    if (!mime)
-      throw new BadRequestException("Format gambar harus PNG, JPG, atau WebP.");
+    const data = await imageToWebp(file?.buffer);
+    const mime = "image/webp";
     const id = randomUUID();
     await this.db.pool.execute(
       "INSERT INTO guide_images(id,mime,data) VALUES(?,?,?)",

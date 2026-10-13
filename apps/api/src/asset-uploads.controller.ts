@@ -1,3 +1,4 @@
+import { imageToWebp } from "./image-webp";
 import { createReadStream } from "node:fs";
 import { mkdir, stat, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
@@ -18,20 +19,7 @@ import { FilesInterceptor } from "@nestjs/platform-express";
 import { AdminGuard } from "./auth/auth.guard";
 
 const directory = resolve(__dirname, "../../../uploads/assets");
-const formats: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
 type UploadFile = { buffer: Buffer; mimetype: string; size: number };
-
-function validImage(file: UploadFile) {
-  const bytes = file.buffer;
-  if (file.mimetype === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (file.mimetype === "image/png") return bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
-  if (file.mimetype === "image/webp") return bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP";
-  return false;
-}
 
 @Controller("api/admin/uploads/assets")
 @UseGuards(AdminGuard)
@@ -42,12 +30,12 @@ export class AssetUploadsController {
   }))
   async upload(@UploadedFiles() files: UploadFile[]) {
     if (!files?.length) throw new BadRequestException("Pilih minimal satu foto.");
-    if (files.some((file) => !formats[file.mimetype] || !validImage(file)))
-      throw new BadRequestException("Gunakan foto JPG, PNG, atau WebP yang valid.");
+    const images: Buffer[] = [];
+    for (const file of files) images.push(await imageToWebp(file.buffer));
     await mkdir(directory, { recursive: true });
-    const urls = await Promise.all(files.map(async (file) => {
-      const filename = `${randomUUID()}.${formats[file.mimetype]}`;
-      await writeFile(resolve(directory, filename), file.buffer, { flag: "wx" });
+    const urls = await Promise.all(images.map(async (data) => {
+      const filename = `${randomUUID()}.webp`;
+      await writeFile(resolve(directory, filename), data, { flag: "wx" });
       return `/api/uploads/assets/${filename}`;
     }));
     return { urls };

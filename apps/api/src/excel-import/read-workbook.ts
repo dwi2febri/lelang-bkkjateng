@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import yauzl from 'yauzl';
-import sharp from 'sharp';
+import { imageToWebp } from "../image-webp";
 import JSZip from 'jszip';
 import {posix} from 'node:path';
 import {BadRequestException} from '@nestjs/common';
@@ -79,9 +79,6 @@ export async function decodePhoto(book:ExcelJS.Workbook,imageId:string) {
   const data=Buffer.from(media.buffer);
   if(data.length>5*1024*1024) throw new Error('Setiap foto maksimal 5 MB.');
   try {
-    const image=sharp(data,{limitInputPixels:40000000,failOn:'error'});
-    const metadata=await image.metadata();
-    if(!['jpeg','png','webp'].includes(metadata.format||'') || (metadata.pages||1)>1) throw new Error();
-    return await image.rotate().webp({quality:88}).toBuffer();
+    return await imageToWebp(data);
   } catch {throw new Error('Foto harus berupa JPG/PNG/WebP yang valid, maksimal 40 megapiksel.');}
 }

@@ -3,7 +3,7 @@ import Image from "next/image";
 export function BrandLogo({ variant = "bordered" }: { variant?: "original" | "bordered" }) {
   return (
     <Image
-      src={variant === "original" ? "/logo/bkk-lelang-v2.png" : "/logo/bkk-lelang-bordered.png"}
+      src={variant === "original" ? "/logo/bkk-lelang-v2.webp" : "/logo/bkk-lelang-bordered.webp"}
       alt="BKK Jawa Tengah — Lelang & Katalog Aset"
       width={270}
       height={90}

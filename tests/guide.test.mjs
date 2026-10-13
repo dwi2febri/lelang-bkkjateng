@@ -1,3 +1,4 @@
+import sharp from "sharp";
 import test from "node:test";
 import assert from "node:assert/strict";
 import mysql from "mysql2/promise";
@@ -68,10 +69,7 @@ test("panduan: proteksi admin, upload, simpan, konflik versi, dan halaman publik
       ).status,
       400,
     );
-    const png = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1cAAAAASUVORK5CYII=",
-      "base64",
-    );
+    const png = await sharp({create:{width:16,height:12,channels:4,background:{r:0,g:128,b:255,alpha:0.5}}}).png().toBuffer();
     const form = new FormData();
     form.append("image", new Blob([png], { type: "image/png" }), "test.png");
     const upload = await fetch(`${base}/api/admin/guide/images`, {
@@ -83,8 +81,8 @@ test("panduan: proteksi admin, upload, simpan, konflik versi, dan halaman publik
     const { url } = await upload.json();
     imageId = url.split("/").pop();
     const image = await fetch(base + url);
-    assert.equal(image.headers.get("content-type"), "image/png");
-    assert.deepEqual(Buffer.from(await image.arrayBuffer()), png);
+    assert.equal(image.headers.get("content-type"), "image/webp");
+    assert.equal((await sharp(Buffer.from(await image.arrayBuffer())).metadata()).format, "webp");
     const blocks = [
       {
         type: "text",

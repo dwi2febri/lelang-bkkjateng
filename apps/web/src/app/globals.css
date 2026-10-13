@@ -1982,7 +1982,7 @@ footer button {
   inset:0 -40px;
   z-index:-1;
   pointer-events:none;
-  background:url('/images/account-welcome.png') center bottom / 100% auto no-repeat;
+  background:url('/images/account-welcome.webp') center bottom / 100% auto no-repeat;
 }
 .public-account-intro-register::before { background-position:center calc(100% - 60px); }
 .public-account-intro h1 { max-width:570px; margin:14px 0; color:var(--navy); font-size:clamp(32px,4vw,52px); letter-spacing:-.05em; line-height:1.15; }

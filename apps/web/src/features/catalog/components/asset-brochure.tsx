@@ -23,7 +23,7 @@ export function AssetBrochure({asset,config,categoryLabel,rootRef,preparing=fals
  const fields=config.fields.filter(field=>field.enabled&&field.showDetail);
  return <div className="asset-brochure" ref={rootRef} data-preparing={preparing} aria-hidden="true" inert>
   <table className="brochure-document">
-   <thead><tr><td><div className="brochure-header"><img src="/logo/bkk-lelang-v2.png" alt="BKK Jateng — Lelang & Katalog Aset" width="240" height="80" loading="eager"/><div><strong>BROSUR ASET</strong><span>{asset.code}</span></div></div></td></tr></thead>
+   <thead><tr><td><div className="brochure-header"><img src="/logo/bkk-lelang-v2.webp" alt="BKK Jateng — Lelang & Katalog Aset" width="240" height="80" loading="eager"/><div><strong>BROSUR ASET</strong><span>{asset.code}</span></div></div></td></tr></thead>
    <tfoot><tr><td><div className="brochure-footer"><span>Lelang & Katalog Aset BKK Jateng · {asset.code}</span><span>Dicetak: <span ref={timestamp}/></span></div></td></tr></tfoot>
    <tbody><tr><td>
     <section className="brochure-identity"><div><span className="brochure-badge">{asset.saleMethod||"Lelang"}</span><span className="brochure-category">{categoryLabel}</span><h1>{asset.title}</h1><p>{asset.address}</p></div><div className="brochure-price">{asset.oldPrice&&asset.oldPrice>asset.price?<del>{rupiah(asset.oldPrice)}</del>:null}<strong>{rupiah(asset.price)}</strong><small>{asset.saleMethod==="Lelang"?"Harga limit":"Harga penawaran"}</small></div></section>

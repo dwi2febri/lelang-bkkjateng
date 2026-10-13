@@ -1,3 +1,4 @@
+import sharp from "sharp";
 ﻿import test from 'node:test';
 import assert from 'node:assert/strict';
 import mysql from 'mysql2/promise';
@@ -23,10 +24,10 @@ test('banner: proteksi, gambar upload, validasi tautan, penyimpanan dan konflik 
   assert.equal((await save({...current,slides:[]})).status,400);
   const bad=new FormData();bad.append('image',new Blob(['not an image']), 'bad.png');
   assert.equal((await fetch(base+'/api/admin/banners/images',{method:'POST',headers:{Cookie,'X-Requested-With':'BKKAdmin',Origin:base},body:bad})).status,400);
-  const file=new FormData();file.append('image',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfZkAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'test.png');
+  const file=new FormData();file.append('image',new Blob([await sharp({create:{width:16,height:12,channels:3,background:'blue'}}).png().toBuffer()],{type:'image/png'}),'test.png');
   const uploaded=await fetch(base+'/api/admin/banners/images',{method:'POST',headers:{Cookie,'X-Requested-With':'BKKAdmin',Origin:base},body:file});assert.equal(uploaded.status,201);
   const {url}=await uploaded.json();imageId=url.split('/').pop();
-  const image=await fetch(base+url);assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/png');
+  const image=await fetch(base+url);assert.equal(image.status,200);assert.equal(image.headers.get('content-type'),'image/webp');
   const changed={...current,slides:[{...current.slides[0],image:url,title:'Uji banner',action:'Buka katalog',href:'/katalog-aset?category=Rumah'}]};
   const saved=await save(changed);assert.equal(saved.status,200);
   const actual=await (await fetch(base+'/api/banners')).json();assert.deepEqual(actual.slides,changed.slides);

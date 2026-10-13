@@ -146,7 +146,7 @@ try {
         a.land,
         a.building,
         a.bedrooms,
-        `https://images.unsplash.com/${a.photo}?auto=format&fit=crop&w=1000&q=85`,
+        `https://images.unsplash.com/${a.photo}?fm=webp&fit=crop&w=1000&q=85`,
         a.date,
         a.certificate,
         description,

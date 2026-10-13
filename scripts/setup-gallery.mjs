@@ -44,7 +44,7 @@ try {
         asset.image,
         ...extra.map(
           (id) =>
-            `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=85`,
+            `https://images.unsplash.com/${id}?fm=webp&fit=crop&w=1400&q=85`,
         ),
       ]),
     ];

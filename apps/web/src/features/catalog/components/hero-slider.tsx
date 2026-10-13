@@ -92,7 +92,7 @@ export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } 
         </div>
         <div className="hero-bkk-logo">
           <img
-            src="/logo/bkk-lelang-v2.png"
+            src="/logo/bkk-lelang-v2.webp"
             alt="BKK Jawa Tengah"
             width={2172}
             height={724}

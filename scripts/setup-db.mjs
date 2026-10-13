@@ -172,7 +172,7 @@ for (const [i, row] of rows.entries()) {
       land,
       building,
       bedrooms,
-      `https://images.unsplash.com/${photos[i]}?auto=format&fit=crop&w=1000&q=85`,
+      `https://images.unsplash.com/${photos[i]}?fm=webp&fit=crop&w=1000&q=85`,
       auctionDate,
       certificate,
       "Data aset ini merupakan contoh untuk demonstrasi aplikasi. Foto adalah ilustrasi dan bukan dokumentasi aset sebenarnya. Informasi lokasi, dokumen, nilai limit, uang jaminan, serta jadwal harus diverifikasi dan dilengkapi petugas sebelum publikasi lelang resmi.",

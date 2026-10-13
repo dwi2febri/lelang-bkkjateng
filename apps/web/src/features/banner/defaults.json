@@ -7,7 +7,7 @@
     "action": "Jelajahi Aset",
     "href": "/katalog-aset",
     "note": "Hunian untuk cerita baru",
-    "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=2200&q=85",
+    "image": "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?fm=webp&fit=crop&w=2200&q=85",
     "trustFirst": "Informasi transparan",
     "trustSecond": "Pilihan aset Jawa Tengah",
     "caption": "Foto ilustrasi properti"
@@ -20,7 +20,7 @@
     "action": "Lihat Ruko & Ruang Usaha",
     "href": "/katalog-aset?category=Ruko",
     "note": "Tempat bagi ide besar Anda",
-    "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2200&q=85",
+    "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?fm=webp&fit=crop&w=2200&q=85",
     "trustFirst": "Informasi transparan",
     "trustSecond": "Pilihan aset Jawa Tengah",
     "caption": "Foto ilustrasi properti"
@@ -33,7 +33,7 @@
     "action": "Lihat Jadwal Lelang",
     "href": "/jadwal-lelang",
     "note": "Pilihan aset, informasi dalam satu tempat",
-    "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=2200&q=85",
+    "image": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?fm=webp&fit=crop&w=2200&q=85",
     "trustFirst": "Informasi transparan",
     "trustSecond": "Pilihan aset Jawa Tengah",
     "caption": "Foto ilustrasi properti"

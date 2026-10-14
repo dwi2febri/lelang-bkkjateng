@@ -3251,7 +3251,7 @@ footer button {
 .hero-slide {
   position: absolute;
   inset: 0;
-  animation: hero-reveal 0.55s ease-out;
+  z-index: 2;
 }
 .hero-slider .hero-content {
   padding-top: 65px;
@@ -5368,4 +5368,10 @@ footer button {
   :is(.homepage-compact, .catalog-with-sidebar, .asset-related) .asset-card .card-bottom span { font-size: 10px; line-height: 1.35; gap: 4px; }
   :is(.homepage-compact, .catalog-with-sidebar, .asset-related) .asset-card .card-bottom svg { width: 14px; height: 14px; }
   .asset-card .card-bottom button { min-height: 28px; font-size: 10px; gap: 4px; }
+}
+
+/* Keep decoded banner images mounted throughout every slide change. */
+.hero-slider-image { inset:0; transition:opacity .45s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .hero-slider-image { transition:none; }
 }

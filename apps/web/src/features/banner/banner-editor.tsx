@@ -6,6 +6,7 @@ import { api, errorMessage } from "@/services/api";
 import { HeroSlider } from "@/features/catalog/components/hero-slider";
 import defaults from "./defaults.json";
 import type { BannerSettings, BannerSlide } from "./types";
+import { resolveBannerImage } from "./images";
 
 const fields: { key: keyof BannerSlide; label: string; max: number }[] = [
   { key: "eyebrow", label: "Teks kecil di atas judul", max: 100 },
@@ -73,7 +74,7 @@ export function BannerEditor() {
         {preview && <div className="banner-editor-preview" inert><HeroSlider key={selected} previewSlides={[slide]} /></div>}
         <div className="guide-editor-block">
           <div className="banner-editor-actions"><h2>Slide {selected + 1}</h2><button className="outline-button" type="button" disabled={selected === 0} onClick={() => { const next = [...settings.slides]; [next[selected - 1], next[selected]] = [next[selected], next[selected - 1]]; change(next); setSelected(selected - 1); }}>← Sebelumnya</button><button className="outline-button" type="button" disabled={selected === settings.slides.length - 1} onClick={() => { const next = [...settings.slides]; [next[selected + 1], next[selected]] = [next[selected], next[selected + 1]]; change(next); setSelected(selected + 1); }}>Berikutnya →</button><button className="outline-button" type="button" disabled={settings.slides.length === 1} onClick={() => { change(settings.slides.filter((_, i) => i !== selected)); setSelected(Math.max(0, selected - 1)); }}>Hapus slide</button></div>
-          <img className="banner-editor-image" src={slide.image} alt={`Gambar slide ${selected + 1}`} />
+          <img className="banner-editor-image" src={resolveBannerImage(slide.image)} alt={`Gambar slide ${selected + 1}`} />
           <UploadField key={selected} label="Gambar banner" hint="Gunakan gambar landscape, disarankan lebar 1920 px. Gambar akan tampil setelah pengaturan disimpan." disabled={busy} onFile={upload} />
           <div className="banner-editor-fields">{fields.map(field => <label className="admin-field" key={field.key}>{field.label}{field.key === "description" ? <textarea rows={4} value={slide[field.key]} maxLength={field.max} onChange={e => patch(field.key, e.target.value)} /> : <input required={["title", "action", "href"].includes(field.key)} value={slide[field.key]} maxLength={field.max} onChange={e => patch(field.key, e.target.value)} />}</label>)}</div>
         </div>

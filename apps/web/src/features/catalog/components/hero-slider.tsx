@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 import defaults from "@/features/banner/defaults.json";
 import type { BannerSlide } from "@/features/banner/types";
@@ -112,7 +112,6 @@ export function HeroSlider({ previewSlides }: { previewSlides?: BannerSlide[] } 
           <p>{slide.description}</p>
           <Link className="gold-button" href={slide.href}>
             {slide.action}
-            <ArrowUpRight size={19} />
           </Link>
           <div className="hero-trust">
             <ShieldCheck size={18} />

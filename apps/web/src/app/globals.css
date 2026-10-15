@@ -597,6 +597,7 @@ h2 {
   gap: 22px;
 }
 .asset-card {
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   border: 1px solid #e5e9ed;
@@ -2067,6 +2068,7 @@ footer button {
   gap: 12px;
 }
 .schedule-item {
+  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 23px;

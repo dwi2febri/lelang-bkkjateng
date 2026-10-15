@@ -23,7 +23,6 @@ import {
 } from "../types/page";
 import {
   ArrowRight,
-  ArrowUpRight,
   Search,
   ChevronDown,
   Heart,
@@ -579,9 +578,6 @@ export default function CatalogPage({
                             <CategoryIcon name={c.icon} size={27} />
                           </span>
                           <strong>{c.label}</strong>
-                          <span className="category-arrow">
-                            <ArrowUpRight size={15} />
-                          </span>
                         </Link>
                       ))}
                     </div>
@@ -600,7 +596,6 @@ export default function CatalogPage({
                       <Link key={name} className={`sale-method-shortcut sale-method-shortcut-${tone}`} href={catalogHref({ saleMethod: name })}>
                         <span className="sale-method-shortcut-icon" aria-hidden="true"><img src={icon} alt="" width={72} height={72} loading="lazy" decoding="async" /></span>
                         <span className="sale-method-shortcut-copy"><strong>{name}</strong><small>{description}</small></span>
-                        <span className="sale-method-shortcut-arrow"><ArrowUpRight size={18} /></span>
                       </Link>
                     ))}
                   </div>

@@ -1,5 +1,5 @@
 "use client";
-import { Heart, MapPin, CalendarDays, ArrowUpRight } from "lucide-react";
+import { Heart, MapPin, CalendarDays } from "lucide-react";
 import { CategoryIcon, type Category } from "@/features/categories/categories";
 import {
   getCategorySettings,
@@ -32,25 +32,25 @@ export function AssetCard({
   onOpen: (asset: CatalogAsset) => void;
 }) {
   return (
-    <article className="asset-card">
+    <article className="asset-card" onClick={() => open(a)}>
       <div className="card-photo">
-        <button
-          className="photo-link"
-          onClick={() => open(a)}
-          aria-label={`Lihat ${a.title}`}
-        >
+        <div className="photo-link">
           <img
             src={a.image}
             alt={`Ilustrasi ${a.category.toLowerCase()}`}
             loading="lazy"
           />
-        </button>
+        </div>
         <AssetBadge price={a.price} oldPrice={a.oldPrice} />
         <button
           aria-label={saved ? "Hapus dari favorit" : "Simpan ke favorit"}
           aria-pressed={saved}
           className={"heart " + (saved ? "saved" : "")}
-          onClick={() => favorite(a.id)}
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            favorite(a.id);
+          }}
         >
           <Heart size={18} fill={saved ? "currentColor" : "none"} />
         </button>
@@ -74,9 +74,9 @@ export function AssetCard({
             {a.city}, Jawa Tengah
           </div>
         </div>
-        <button className="card-title" onClick={() => open(a)}>
+        <div className="card-title">
           {a.title}
-        </button>
+        </div>
         <div className="specs">
           {getCategorySettings(
             a.category,
@@ -109,9 +109,8 @@ export function AssetCard({
               a.saleMethod
             )}
           </span>
-          <button onClick={() => open(a)} aria-label={`Detail ${a.title}`}>
+          <button type="button" aria-label={`Detail ${a.title}`}>
             Lihat detail
-            <ArrowUpRight size={18} />
           </button>
         </div>
       </div>

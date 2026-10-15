@@ -3,7 +3,6 @@ import {
   CalendarDays,
   Clock3,
   MapPin,
-  ArrowUpRight,
   Heart,
 } from "lucide-react";
 import type { CatalogAsset } from "../types";
@@ -39,7 +38,7 @@ export function ScheduleList({
           </div>
           <div className="schedule-rows">
             {items.map((asset) => (
-              <article className="schedule-item" key={asset.id}>
+              <article className="schedule-item" key={asset.id} onClick={() => onOpen(asset)}>
                 <div className="schedule-time">
                   <Clock3 size={17} />
                   <strong>
@@ -54,7 +53,7 @@ export function ScheduleList({
                 </div>
                 <button
                   className="schedule-photo"
-                  onClick={() => onOpen(asset)}
+                  type="button"
                   aria-label={`Lihat ${asset.title}`}
                 >
                   <img
@@ -67,7 +66,7 @@ export function ScheduleList({
                   <span className="schedule-category">
                     {asset.category} · {asset.code}
                   </span>
-                  <button onClick={() => onOpen(asset)}>{asset.title}</button>
+                  <button type="button">{asset.title}</button>
                   <span className="schedule-location">
                     <MapPin size={13} />
                     {asset.city}, Jawa Tengah
@@ -81,8 +80,8 @@ export function ScheduleList({
                 <div className="schedule-price">
                   <span>Harga limit</span>
                   <strong>{currency(asset.price)}</strong>
-                  <button className="text-button" onClick={() => onOpen(asset)}>
-                    Lihat detail <ArrowUpRight size={16} />
+                  <button type="button" className="text-button" aria-label={`Detail ${asset.title}`}>
+                    Lihat detail
                   </button>
                 </div>
                 <button
@@ -90,7 +89,11 @@ export function ScheduleList({
                     "schedule-favorite " +
                     (favorites.includes(asset.id) ? "saved" : "")
                   }
-                  onClick={() => onFavorite(asset.id)}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onFavorite(asset.id);
+                  }}
                   aria-label={
                     favorites.includes(asset.id)
                       ? `Hapus ${asset.title} dari favorit`
